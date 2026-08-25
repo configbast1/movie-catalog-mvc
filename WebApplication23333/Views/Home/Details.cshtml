@@ -1,0 +1,38 @@
+@model Movie
+
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<a class="back-link" asp-controller="Home" asp-action="Index">← Назад до Топ-10</a>
+
+<article class="movie-details">
+    <div class="details-poster">
+        <img src="@Model.PosterPath" alt="Постер фільму «@Model.Title»" />
+    </div>
+
+    <div class="details-body">
+        <h1>@Model.Title</h1>
+
+        @if (!string.IsNullOrWhiteSpace(Model.OriginalTitle))
+        {
+            <p class="original-title">@Model.OriginalTitle</p>
+        }
+
+        <p class="details-rating"><span>@Model.Rating.ToString("0.0")</span> / 10</p>
+
+        <dl class="details-list">
+            <dt>@Html.DisplayNameFor(m => m.Director)</dt>
+            <dd>@Html.DisplayFor(m => m.Director)</dd>
+
+            <dt>@Html.DisplayNameFor(m => m.Genre)</dt>
+            <dd>@Html.DisplayFor(m => m.Genre)</dd>
+
+            <dt>@Html.DisplayNameFor(m => m.ReleaseYear)</dt>
+            <dd>@Html.DisplayFor(m => m.ReleaseYear)</dd>
+        </dl>
+
+        <h2 class="details-subhead">@Html.DisplayNameFor(m => m.Description)</h2>
+        <p class="details-description">@Html.DisplayFor(m => m.Description)</p>
+    </div>
+</article>

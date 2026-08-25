@@ -1,0 +1,45 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+.vscode/
+*.rsuser
+
+## Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+## NuGet
+*.nupkg
+packages/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## SQL Server / LocalDB
+*.mdf
+*.ldf
+*.ndf
+
+## Rider
+.idea/
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Службові
+.preview/
+__pycache__/
+*.pyc
