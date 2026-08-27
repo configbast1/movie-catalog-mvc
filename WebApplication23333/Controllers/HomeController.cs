@@ -1,47 +1,23 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WebApplication23333.Data;
+﻿using Microsoft.AspNetCore.Mvc;
 
 namespace WebApplication23333.Controllers;
 
 public class HomeController : Controller
 {
-    private readonly AppDbContext _context;
+    public IActionResult Index() => RedirectToAction("Index", "Movies");
 
-    public HomeController(AppDbContext context)
+    [Route("Home/StatusCodeHandler/{statusCode:int}")]
+    public IActionResult StatusCodeHandler(int statusCode)
     {
-        _context = context;
-    }
-
-    public async Task<IActionResult> Index()
-    {
-        var topMovies = await _context.Movies
-            .AsNoTracking()
-            .OrderByDescending(m => m.Rating)
-            .ThenBy(m => m.Title)
-            .Take(10)
-            .ToListAsync();
-
-        return View(topMovies);
-    }
-
-    public async Task<IActionResult> Details(int? id)
-    {
-        if (id is null)
+        if (statusCode == 404)
         {
-            return NotFound();
+            Response.StatusCode = 404;
+            return View("NotFound");
         }
 
-        var movie = await _context.Movies
-            .AsNoTracking()
-            .FirstOrDefaultAsync(m => m.Id == id);
-
-        if (movie is null)
-        {
-            return NotFound();
-        }
-
-        return View(movie);
+        Response.StatusCode = statusCode;
+        ViewData["StatusCode"] = statusCode;
+        return View("Error");
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

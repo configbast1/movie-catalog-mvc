@@ -1,0 +1,43 @@
+﻿@model Movie
+
+@{
+    ViewData["Title"] = $"Видалення — {Model.Title}";
+}
+
+<a class="back-link" asp-action="Details" asp-route-id="@Model.Id">← Назад до фільму</a>
+
+<section class="page-head">
+    <p class="eyebrow danger">Видалення</p>
+    <h1>Видалити фільм?</h1>
+    <p class="lead">Цю дію не можна скасувати. Фільм буде остаточно видалено з бази даних.</p>
+</section>
+
+<div class="confirm-card">
+    <div class="confirm-poster">
+        <img src="@Model.PosterPath" alt="Постер фільму «@Model.Title»" />
+    </div>
+
+    <div class="confirm-body">
+        <h2>@Model.Title</h2>
+
+        <dl class="details-list">
+            <dt>@Html.DisplayNameFor(m => m.Director)</dt>
+            <dd>@Html.DisplayFor(m => m.Director)</dd>
+
+            <dt>@Html.DisplayNameFor(m => m.Genre)</dt>
+            <dd>@Html.DisplayFor(m => m.Genre)</dd>
+
+            <dt>@Html.DisplayNameFor(m => m.ReleaseYear)</dt>
+            <dd>@Html.DisplayFor(m => m.ReleaseYear)</dd>
+
+            <dt>@Html.DisplayNameFor(m => m.Rating)</dt>
+            <dd>@Model.Rating.ToString("0.0")</dd>
+        </dl>
+
+        <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="form-actions">
+            <input type="hidden" asp-for="Id" />
+            <button type="submit" class="btn btn-danger">Так, видалити</button>
+            <a class="btn btn-ghost" asp-action="Index">Скасувати</a>
+        </form>
+    </div>
+</div>

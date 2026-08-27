@@ -1,0 +1,15 @@
+﻿@{
+    ViewData["Title"] = "Сторінку не знайдено";
+    Layout = "_Layout";
+}
+
+<section class="status-page">
+    <p class="status-code">404</p>
+    <h1>Такої сторінки немає</h1>
+    <p class="lead">
+        Можливо, фільм було видалено або ви перейшли за застарілим посиланням.
+    </p>
+    <div class="page-actions">
+        <a class="btn btn-accent" asp-controller="Movies" asp-action="Index">На головну</a>
+    </div>
+</section>

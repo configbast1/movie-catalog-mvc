@@ -1,3 +1,5 @@
+﻿using System.Globalization;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using WebApplication23333.Data;
 
@@ -17,11 +19,21 @@ using (var scope = app.Services.CreateScope())
     context.Database.EnsureCreated();
 }
 
+var invariantCultures = new[] { CultureInfo.InvariantCulture };
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture(CultureInfo.InvariantCulture),
+    SupportedCultures = invariantCultures,
+    SupportedUICultures = invariantCultures
+});
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
+
+app.UseStatusCodePagesWithReExecute("/Home/StatusCodeHandler/{0}");
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
@@ -31,6 +43,6 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller=Movies}/{action=Index}/{id?}");
 
 app.Run();

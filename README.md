@@ -61,16 +61,26 @@ WebApplication23333/
 └── WebApplication23333/
     ├── Program.cs                  # AddDbContext + UseSqlServer + EnsureCreated()
     ├── appsettings.json            # рядок підключення DefaultConnection
-    ├── Controllers/HomeController.cs
+    ├── Controllers/
+    │   ├── MoviesController.cs     # повний CRUD: Index / Details / Create / Edit / Delete
+    │   └── HomeController.cs       # обробка помилок і сторінка 404
     ├── Data/AppDbContext.cs        # DbContext + конфігурація + seed 10 фільмів
     ├── Models/Movie.cs
     ├── Views/
-    │   ├── Home/Index.cshtml       # сітка карток
-    │   ├── Home/Details.cshtml     # сторінка фільму
-    │   └── Shared/_Layout.cshtml
+    │   ├── Movies/Index.cshtml     # сітка карток + кнопки дій
+    │   ├── Movies/Details.cshtml   # сторінка фільму
+    │   ├── Movies/Create.cshtml    # форма додавання
+    │   ├── Movies/Edit.cshtml      # форма редагування
+    │   ├── Movies/Delete.cshtml    # підтвердження видалення
+    │   └── Shared/
+    │       ├── _Layout.cshtml
+    │       ├── _Message.cshtml     # повідомлення про успішну дію
+    │       ├── NotFound.cshtml     # власна сторінка 404
+    │       └── Error.cshtml
     └── wwwroot/
-        ├── css/site.css            # темна тема, адаптивна сітка
-        └── images/posters/*.jpg    # 10 постерів
+        ├── css/site.css            # темна тема, адаптивна сітка, форми
+        ├── images/posters/*.jpg    # 10 стартових постерів
+        └── images/uploads/         # постери, завантажені через веб-інтерфейс
 ```
 
 ---
@@ -163,6 +173,47 @@ modelBuilder.Entity<Movie>(entity =>
 
 modelBuilder.Entity<Movie>().HasData(SeedMovies);   // 10 фільмів
 ```
+
+---
+
+## CRUD-операції
+
+Усі операції над фільмами зібрані в одному контролері — `MoviesController`.
+
+| Дія | Маршрут | Метод | Опис |
+| --- | --- | --- | --- |
+| **Read** | `/Movies` | GET | Сітка всіх фільмів, відсортована за оцінкою |
+| **Details** | `/Movies/Details/{id}` | GET | Повна картка: рік, режисер, жанр, опис, постер |
+| **Create** | `/Movies/Create` | GET / POST | Форма додавання + завантаження постера |
+| **Update** | `/Movies/Edit/{id}` | GET / POST | Редагування полів і заміна постера |
+| **Delete** | `/Movies/Delete/{id}` | GET / POST | Сторінка підтвердження, потім видалення |
+
+### Валідація
+
+- **На стороні моделі** — атрибути `Required`, `StringLength`, `Range` у `Models/Movie.cs`,
+  результат перевіряється через `ModelState.IsValid`.
+- **На стороні клієнта** — `jquery.validate` + `jquery.validate.unobtrusive`
+  (підключені через `_ValidationScriptsPartial` у секції `Scripts`), тому помилки
+  показуються ще до відправлення форми.
+- Форми захищені `[ValidateAntiForgeryToken]`.
+
+### Завантаження постера
+
+Форми `Create` і `Edit` відправляються як `multipart/form-data`, файл приймається
+параметром `IFormFile? posterFile`:
+
+- дозволені формати — `.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`;
+- максимальний розмір — 5 МБ;
+- файл зберігається у `wwwroot/images/uploads` під іменем-`Guid`, у базу пише́ться лише шлях;
+- якщо файл не обрано під час створення — підставляється заглушка `poster-placeholder.svg`;
+- при редагуванні старий завантажений постер видаляється, при видаленні фільму — теж.
+
+### Сторінка 404
+
+У `Program.cs` підключено `app.UseStatusCodePagesWithReExecute("/Home/StatusCodeHandler/{0}")`.
+`HomeController.StatusCodeHandler` для коду 404 повертає власне подання
+`Views/Shared/NotFound.cshtml`, для інших кодів — `Error.cshtml`.
+Неіснуючий `id` у `Details` / `Edit` / `Delete` теж призводить до цієї сторінки.
 
 ---
 

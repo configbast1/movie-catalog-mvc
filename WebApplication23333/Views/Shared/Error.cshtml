@@ -1,8 +1,13 @@
-@{
+﻿@{
     ViewData["Title"] = "Помилка";
+    var statusCode = ViewData["StatusCode"];
 }
 
-<section class="page-head">
+<section class="status-page">
+    <p class="status-code">@(statusCode ?? 500)</p>
     <h1>Сталася помилка</h1>
-    <p class="lead">Під час обробки запиту виникла помилка. Спробуйте повернутися на <a asp-controller="Home" asp-action="Index">головну сторінку</a>.</p>
+    <p class="lead">Під час обробки запиту виникла помилка. Спробуйте повернутися на головну сторінку.</p>
+    <div class="page-actions">
+        <a class="btn btn-accent" asp-controller="Movies" asp-action="Index">На головну</a>
+    </div>
 </section>

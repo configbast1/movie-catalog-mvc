@@ -43,3 +43,7 @@ Thumbs.db
 .preview/
 __pycache__/
 *.pyc
+
+## Завантажені постери
+WebApplication23333/wwwroot/images/uploads/*
+!WebApplication23333/wwwroot/images/uploads/.gitkeep

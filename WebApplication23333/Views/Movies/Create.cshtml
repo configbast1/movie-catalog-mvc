@@ -1,0 +1,77 @@
+﻿@model Movie
+
+@{
+    ViewData["Title"] = "Новий фільм";
+}
+
+<a class="back-link" asp-action="Index">← Назад до каталогу</a>
+
+<section class="page-head">
+    <p class="eyebrow">Створення</p>
+    <h1>Додати фільм</h1>
+    <p class="lead">Заповніть поля нижче. Постер можна завантажити зі свого пристрою.</p>
+</section>
+
+<form asp-action="Create" method="post" enctype="multipart/form-data" class="form-card">
+    <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+
+    <div class="form-grid">
+        <div class="form-field span-2">
+            <label asp-for="Title"></label>
+            <input asp-for="Title" class="input" autocomplete="off" />
+            <span asp-validation-for="Title" class="field-error"></span>
+        </div>
+
+        <div class="form-field span-2">
+            <label asp-for="OriginalTitle"></label>
+            <input asp-for="OriginalTitle" class="input" autocomplete="off" />
+            <span asp-validation-for="OriginalTitle" class="field-error"></span>
+        </div>
+
+        <div class="form-field">
+            <label asp-for="Director"></label>
+            <input asp-for="Director" class="input" autocomplete="off" />
+            <span asp-validation-for="Director" class="field-error"></span>
+        </div>
+
+        <div class="form-field">
+            <label asp-for="Genre"></label>
+            <input asp-for="Genre" class="input" autocomplete="off" />
+            <span asp-validation-for="Genre" class="field-error"></span>
+        </div>
+
+        <div class="form-field">
+            <label asp-for="ReleaseYear"></label>
+            <input asp-for="ReleaseYear" class="input" type="number" min="1888" max="2100" step="1" />
+            <span asp-validation-for="ReleaseYear" class="field-error"></span>
+        </div>
+
+        <div class="form-field">
+            <label asp-for="Rating"></label>
+            <input asp-for="Rating" class="input" type="number" min="0" max="10" step="0.1" />
+            <span asp-validation-for="Rating" class="field-error"></span>
+        </div>
+
+        <div class="form-field span-2">
+            <label asp-for="Description"></label>
+            <textarea asp-for="Description" class="input" rows="5"></textarea>
+            <span asp-validation-for="Description" class="field-error"></span>
+        </div>
+
+        <div class="form-field span-2">
+            <label for="posterFile">Постер (файл із вашого пристрою)</label>
+            <input type="file" id="posterFile" name="posterFile" accept="image/*" class="input file-input" />
+            <span class="field-hint">JPG, JPEG, PNG, WEBP або GIF, до 5 МБ. Якщо не обрати файл — буде використано заглушку.</span>
+            <span class="field-error">@Html.ValidationMessage("posterFile")</span>
+        </div>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-accent">Зберегти</button>
+        <a class="btn btn-ghost" asp-action="Index">Скасувати</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
