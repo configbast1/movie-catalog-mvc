@@ -7,11 +7,8 @@ namespace WebApplication23333.Controllers;
 
 public class MoviesController : Controller
 {
-    private const long MaxPosterBytes = 5 * 1024 * 1024;
     private const string UploadsFolder = "/images/uploads/";
     private const string PlaceholderPoster = "/images/poster-placeholder.svg";
-
-    private static readonly string[] AllowedExtensions = { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
 
     private readonly AppDbContext _context;
     private readonly IWebHostEnvironment _environment;
@@ -44,6 +41,24 @@ public class MoviesController : Controller
         return View(movie);
     }
 
+    /// <summary>
+    /// Серверна частина клієнтської перевірки [Remote] на унікальність назви.
+    /// Викликається з браузера через AJAX і має повертати JSON true/false.
+    /// </summary>
+    [AcceptVerbs("GET", "POST")]
+    public async Task<IActionResult> CheckTitle(string? title, int id)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return Json(true);
+        }
+
+        var normalized = title.Trim();
+        var exists = await _context.Movies.AnyAsync(m => m.Id != id && m.Title == normalized);
+
+        return Json(!exists);
+    }
+
     public IActionResult Create()
     {
         return View(new Movie { ReleaseYear = DateTime.Now.Year });
@@ -51,8 +66,9 @@ public class MoviesController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(Movie movie, IFormFile? posterFile)
+    public async Task<IActionResult> Create(Movie movie)
     {
+        // шлях до постера формується на сервері, тому з перевірки форми його прибираємо
         ModelState.Remove(nameof(Movie.PosterPath));
 
         if (!ModelState.IsValid)
@@ -60,12 +76,8 @@ public class MoviesController : Controller
             return View(movie);
         }
 
-        var posterPath = await SavePosterAsync(posterFile);
-
-        if (!ModelState.IsValid)
-        {
-            return View(movie);
-        }
+        // файл уже пройшов перевірку атрибутом PosterFile, лишилось зберегти
+        var posterPath = await SavePosterAsync(movie.PosterFile);
 
         movie.Id = 0;
         movie.PosterPath = posterPath ?? PlaceholderPoster;
@@ -90,7 +102,7 @@ public class MoviesController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, Movie movie, IFormFile? posterFile)
+    public async Task<IActionResult> Edit(int id, Movie movie)
     {
         if (id != movie.Id)
         {
@@ -108,13 +120,7 @@ public class MoviesController : Controller
             return View(movie);
         }
 
-        var newPosterPath = await SavePosterAsync(posterFile);
-
-        if (!ModelState.IsValid)
-        {
-            return View(movie);
-        }
-
+        var newPosterPath = await SavePosterAsync(movie.PosterFile);
         var previousPosterPath = existing.PosterPath;
 
         existing.Title = movie.Title;
@@ -207,19 +213,6 @@ public class MoviesController : Controller
         }
 
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-
-        if (!AllowedExtensions.Contains(extension))
-        {
-            ModelState.AddModelError("posterFile", "Дозволені формати: JPG, JPEG, PNG, WEBP, GIF.");
-            return null;
-        }
-
-        if (file.Length > MaxPosterBytes)
-        {
-            ModelState.AddModelError("posterFile", "Розмір файлу не має перевищувати 5 МБ.");
-            return null;
-        }
-
         var webRoot = _environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot");
         var uploadsDirectory = Path.Combine(webRoot, "images", "uploads");
         Directory.CreateDirectory(uploadsDirectory);

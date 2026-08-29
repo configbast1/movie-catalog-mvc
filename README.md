@@ -62,7 +62,12 @@ WebApplication23333/
     │   ├── MoviesController.cs     # повний CRUD: Index / Details / Create / Edit / Delete
     │   └── HomeController.cs       # редірект на каталог, обробка помилок і 404
     ├── Data/AppDbContext.cs        # DbContext + конфігурація + seed 10 фільмів
-    ├── Models/Movie.cs
+    ├── Models/Movie.cs             # Data Annotations + IValidatableObject
+    ├── Validation/                 # власні (кастомні) атрибути валідації
+    │   ├── ReleaseYearAttribute.cs
+    │   ├── ForbiddenWordsAttribute.cs
+    │   ├── PosterFileAttribute.cs
+    │   └── UniqueMovieTitleAttribute.cs
     ├── Views/
     │   ├── Movies/Index.cshtml     # сітка карток + кнопки дій
     │   ├── Movies/Details.cshtml   # сторінка фільму
@@ -75,7 +80,8 @@ WebApplication23333/
     │       ├── NotFound.cshtml     # власна сторінка 404
     │       └── Error.cshtml
     └── wwwroot/
-        ├── css/site.css            # темна тема, адаптивна сітка, форми
+        ├── css/site.css            # темна тема, адаптивна сітка, форми, стилі помилок
+        ├── js/validation.js        # адаптери кастомних атрибутів для jQuery Validate
         ├── images/posters/*.jpg    # 10 стартових постерів
         └── images/uploads/         # постери, завантажені через веб-інтерфейс
 ```
@@ -184,14 +190,61 @@ modelBuilder.Entity<Movie>().HasData(SeedMovies);   // 10 фільмів
 | **Update** | `/Movies/Edit/{id}` | GET / POST | Редагування полів і заміна постера |
 | **Delete** | `/Movies/Delete/{id}` | GET / POST | Сторінка підтвердження, потім видалення |
 
-### Валідація
+---
 
-- **На стороні моделі** — атрибути `Required`, `StringLength`, `Range` у `Models/Movie.cs`,
-  результат перевіряється через `ModelState.IsValid`.
-- **На стороні клієнта** — `jquery.validate` + `jquery.validate.unobtrusive`
-  (підключені через `_ValidationScriptsPartial` у секції `Scripts`), тому помилки
-  показуються ще до відправлення форми.
-- Форми захищені `[ValidateAntiForgeryToken]`.
+## Валідація форм
+
+Перевірка виконується **двічі** — у браузері (щоб користувач одразу бачив помилку)
+і на сервері (бо клієнтську валідацію легко обійти).
+
+### Вбудовані атрибути Data Annotations
+
+`Models/Movie.cs`: `Required`, `StringLength` (з `MinimumLength`), `Range`,
+`RegularExpression`, `DataType`, `Display`, `Key`, `NotMapped`.
+
+### Власні (кастомні) атрибути — папка `Validation/`
+
+| Атрибут | Що перевіряє | Клієнт |
+| --- | --- | --- |
+| `ReleaseYearAttribute` | рік від 1888 до «поточний + 1» (щоб можна було додати анонс) | так, `IClientModelValidator` |
+| `ForbiddenWordsAttribute` | текст не містить слів-заглушок (`lorem`, `test`, `asdf`…) | так, `IClientModelValidator` |
+| `PosterFileAttribute` | розширення та розмір обраного файлу постера | так, через File API |
+| `UniqueMovieTitleAttribute` | назва фільму унікальна в каталозі (звертається до `AppDbContext`) | ні — на клієнті цю ж перевірку робить `[Remote]` |
+
+Перші три реалізують `IClientModelValidator`: атрибут сам дописує до `<input>`
+теги `data-val-*`, а `wwwroot/js/validation.js` реєструє відповідні методи та
+адаптери для `jquery.validate.unobtrusive`.
+
+### Перевірки рівня всієї моделі
+
+`Movie` реалізує `IValidatableObject` — правила, які залежать від кількох полів одразу:
+
+- оригінальна назва не повинна дублювати основну;
+- фільму, який ще не вийшов (рік більший за поточний), не можна виставляти оцінку —
+  ця помилка не прив'язана до поля і потрапляє у загальний блок.
+
+### Виведення помилок — тег-хелпери
+
+```html
+<div asp-validation-summary="All" class="validation-summary"></div>
+...
+<input asp-for="Title" class="input" />
+<span asp-validation-for="Title" class="field-error"></span>
+```
+
+### Оформлення
+
+У `site.css` описані стилі та анімації для помилок:
+
+- повідомлення поля — червоний колір, іконка ⚠ через `::before`,
+  поява з анімацією `error-pop` (fade + зсув);
+- поле з помилкою — червона рамка, м'яке підсвічування і коротке тремтіння `error-shake`;
+- загальний блок — червона рамка зліва, напівпрозорий фон, заголовок
+  «Форму не збережено — виправте помилки», а при спробі відправити невалідну
+  форму блок додатково «тремтить» (клас `is-shaking` з `validation.js`).
+
+Форми захищені `[ValidateAntiForgeryToken]` і відправляються з `novalidate`,
+щоб показувати власні стилізовані повідомлення замість стандартних браузерних.
 
 ### Завантаження постера
 
