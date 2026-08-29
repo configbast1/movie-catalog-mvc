@@ -38,7 +38,7 @@
 | `Director` | `nvarchar(120)` | **Режисер** |
 | `Genre` | `nvarchar(80)` | **Жанр** |
 | `ReleaseYear` | `int` | **Рік випуску** |
-| `PosterPath` | `nvarchar(260)` | **Постер** — відносний шлях до файлу у `wwwroot/images/posters` |
+| `PosterPath` | `nvarchar(260)` | **Постер** — відносний шлях до файлу у `wwwroot/images/posters` або `wwwroot/images/uploads` |
 | `Description` | `nvarchar(1000)` | **Короткий опис** |
 | `Rating` | `decimal(3,1)` | Оцінка 0–10, за нею сортується Топ-10 |
 
@@ -55,15 +55,12 @@ WebApplication23333/
 ├── README.md
 ├── .gitignore
 ├── screenshots/                    # скріншоти інтерфейсу
-├── tools/
-│   ├── generate_posters.py         # генерація постерів (Python + Pillow)
-│   └── make_preview.py             # службовий скрипт прев'ю для скріншотів
 └── WebApplication23333/
     ├── Program.cs                  # AddDbContext + UseSqlServer + EnsureCreated()
     ├── appsettings.json            # рядок підключення DefaultConnection
     ├── Controllers/
     │   ├── MoviesController.cs     # повний CRUD: Index / Details / Create / Edit / Delete
-    │   └── HomeController.cs       # обробка помилок і сторінка 404
+    │   └── HomeController.cs       # редірект на каталог, обробка помилок і 404
     ├── Data/AppDbContext.cs        # DbContext + конфігурація + seed 10 фільмів
     ├── Models/Movie.cs
     ├── Views/
@@ -147,17 +144,16 @@ using (var scope = app.Services.CreateScope())
 }
 ```
 
-**`HomeController.Index`** — читання Топ-10 з бази:
+**`MoviesController.Index`** — читання каталогу з бази:
 
 ```csharp
-var topMovies = await _context.Movies
+var movies = await _context.Movies
     .AsNoTracking()
     .OrderByDescending(m => m.Rating)
     .ThenBy(m => m.Title)
-    .Take(10)
     .ToListAsync();
 
-return View(topMovies);
+return View(movies);
 ```
 
 **`AppDbContext`** — конфігурація моделі та seed:
@@ -251,10 +247,7 @@ dotnet ef database update
 
 ## Про постери
 
-Постери — **власна згенерована графіка** (градієнт + геометричний мотив + назва),
-створена скриптом `tools/generate_posters.py` на Python + Pillow. Чужих зображень
-у репозиторії немає. Перегенерувати:
-
-```bash
-python tools/generate_posters.py
-```
+Стартові 10 постерів — **власна згенерована графіка** (градієнт + геометричний
+мотив + назва), чужих зображень у репозиторії немає. Постери, які користувач
+завантажує через форму, потрапляють у `wwwroot/images/uploads` і в репозиторій
+не комітяться.

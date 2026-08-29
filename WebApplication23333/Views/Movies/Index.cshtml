@@ -1,7 +1,7 @@
 ﻿@model IEnumerable<Movie>
 
 @{
-    ViewData["Title"] = "Топ-10 фільмів";
+    ViewData["Title"] = "Каталог фільмів";
 }
 
 <section class="page-head">
@@ -37,7 +37,10 @@ else
                 <a class="poster-link" asp-action="Details" asp-route-id="@movie.Id">
                     <div class="poster-wrap">
                         <img src="@movie.PosterPath" alt="Постер фільму «@movie.Title»" loading="lazy" />
-                        <span class="rank">#@position</span>
+                        @if (position <= 10)
+                        {
+                            <span class="rank">#@position</span>
+                        }
                         <span class="rating">@movie.Rating.ToString("0.0")</span>
                     </div>
                 </a>

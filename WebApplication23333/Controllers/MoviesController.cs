@@ -55,6 +55,11 @@ public class MoviesController : Controller
     {
         ModelState.Remove(nameof(Movie.PosterPath));
 
+        if (!ModelState.IsValid)
+        {
+            return View(movie);
+        }
+
         var posterPath = await SavePosterAsync(posterFile);
 
         if (!ModelState.IsValid)
@@ -98,12 +103,19 @@ public class MoviesController : Controller
             return NotFound();
         }
 
+        if (!ModelState.IsValid)
+        {
+            return View(movie);
+        }
+
         var newPosterPath = await SavePosterAsync(posterFile);
 
         if (!ModelState.IsValid)
         {
             return View(movie);
         }
+
+        var previousPosterPath = existing.PosterPath;
 
         existing.Title = movie.Title;
         existing.OriginalTitle = movie.OriginalTitle;
@@ -115,7 +127,6 @@ public class MoviesController : Controller
 
         if (newPosterPath is not null)
         {
-            DeleteUploadedPoster(existing.PosterPath);
             existing.PosterPath = newPosterPath;
         }
 
@@ -131,6 +142,11 @@ public class MoviesController : Controller
             }
 
             throw;
+        }
+
+        if (newPosterPath is not null)
+        {
+            DeleteUploadedPoster(previousPosterPath);
         }
 
         TempData["Message"] = $"Фільм «{existing.Title}» оновлено.";
@@ -235,9 +251,18 @@ public class MoviesController : Controller
         var relative = posterPath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
         var fullPath = Path.Combine(webRoot, relative);
 
-        if (System.IO.File.Exists(fullPath))
+        try
         {
-            System.IO.File.Delete(fullPath);
+            if (System.IO.File.Exists(fullPath))
+            {
+                System.IO.File.Delete(fullPath);
+            }
+        }
+        catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
         }
     }
 }
