@@ -1,38 +1,31 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WebApplication23333.Data;
 using WebApplication23333.Models;
+using WebApplication23333.Services;
 
 namespace WebApplication23333.Controllers;
 
+/// <summary>
+/// Тонкий контролер: жодних звернень до бази даних чи файлової системи —
+/// уся робота делегується IMovieService, який приходить через конструктор (DI).
+/// </summary>
 public class MoviesController : Controller
 {
-    private const string UploadsFolder = "/images/uploads/";
-    private const string PlaceholderPoster = "/images/poster-placeholder.svg";
+    private readonly IMovieService _movieService;
 
-    private readonly AppDbContext _context;
-    private readonly IWebHostEnvironment _environment;
-
-    public MoviesController(AppDbContext context, IWebHostEnvironment environment)
+    public MoviesController(IMovieService movieService)
     {
-        _context = context;
-        _environment = environment;
+        _movieService = movieService;
     }
 
     public async Task<IActionResult> Index()
     {
-        var movies = await _context.Movies
-            .AsNoTracking()
-            .OrderByDescending(m => m.Rating)
-            .ThenBy(m => m.Title)
-            .ToListAsync();
-
+        var movies = await _movieService.GetAllAsync();
         return View(movies);
     }
 
     public async Task<IActionResult> Details(int? id)
     {
-        var movie = await FindMovieAsync(id, asNoTracking: true);
+        var movie = await _movieService.GetByIdAsync(id);
         if (movie is null)
         {
             return NotFound();
@@ -48,15 +41,8 @@ public class MoviesController : Controller
     [AcceptVerbs("GET", "POST")]
     public async Task<IActionResult> CheckTitle(string? title, int id)
     {
-        if (string.IsNullOrWhiteSpace(title))
-        {
-            return Json(true);
-        }
-
-        var normalized = title.Trim();
-        var exists = await _context.Movies.AnyAsync(m => m.Id != id && m.Title == normalized);
-
-        return Json(!exists);
+        var isUnique = await _movieService.IsTitleUniqueAsync(title, id);
+        return Json(isUnique);
     }
 
     public IActionResult Create()
@@ -76,22 +62,15 @@ public class MoviesController : Controller
             return View(movie);
         }
 
-        // файл уже пройшов перевірку атрибутом PosterFile, лишилось зберегти
-        var posterPath = await SavePosterAsync(movie.PosterFile);
+        var created = await _movieService.CreateAsync(movie);
 
-        movie.Id = 0;
-        movie.PosterPath = posterPath ?? PlaceholderPoster;
-
-        _context.Movies.Add(movie);
-        await _context.SaveChangesAsync();
-
-        TempData["Message"] = $"Фільм «{movie.Title}» додано.";
+        TempData["Message"] = $"Фільм «{created.Title}» додано.";
         return RedirectToAction(nameof(Index));
     }
 
     public async Task<IActionResult> Edit(int? id)
     {
-        var movie = await FindMovieAsync(id, asNoTracking: true);
+        var movie = await _movieService.GetByIdAsync(id);
         if (movie is null)
         {
             return NotFound();
@@ -104,13 +83,7 @@ public class MoviesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, Movie movie)
     {
-        if (id != movie.Id)
-        {
-            return NotFound();
-        }
-
-        var existing = await _context.Movies.FirstOrDefaultAsync(m => m.Id == id);
-        if (existing is null)
+        if (id != movie.Id || !await _movieService.ExistsAsync(id))
         {
             return NotFound();
         }
@@ -120,48 +93,19 @@ public class MoviesController : Controller
             return View(movie);
         }
 
-        var newPosterPath = await SavePosterAsync(movie.PosterFile);
-        var previousPosterPath = existing.PosterPath;
-
-        existing.Title = movie.Title;
-        existing.OriginalTitle = movie.OriginalTitle;
-        existing.Director = movie.Director;
-        existing.Genre = movie.Genre;
-        existing.ReleaseYear = movie.ReleaseYear;
-        existing.Description = movie.Description;
-        existing.Rating = movie.Rating;
-
-        if (newPosterPath is not null)
+        var updated = await _movieService.UpdateAsync(id, movie);
+        if (updated is null)
         {
-            existing.PosterPath = newPosterPath;
+            return NotFound();
         }
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!await _context.Movies.AnyAsync(m => m.Id == id))
-            {
-                return NotFound();
-            }
-
-            throw;
-        }
-
-        if (newPosterPath is not null)
-        {
-            DeleteUploadedPoster(previousPosterPath);
-        }
-
-        TempData["Message"] = $"Фільм «{existing.Title}» оновлено.";
-        return RedirectToAction(nameof(Details), new { id = existing.Id });
+        TempData["Message"] = $"Фільм «{updated.Title}» оновлено.";
+        return RedirectToAction(nameof(Details), new { id = updated.Id });
     }
 
     public async Task<IActionResult> Delete(int? id)
     {
-        var movie = await FindMovieAsync(id, asNoTracking: true);
+        var movie = await _movieService.GetByIdAsync(id);
         if (movie is null)
         {
             return NotFound();
@@ -175,87 +119,13 @@ public class MoviesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        var movie = await _context.Movies.FirstOrDefaultAsync(m => m.Id == id);
-        if (movie is null)
+        var deleted = await _movieService.DeleteAsync(id);
+        if (deleted is null)
         {
             return NotFound();
         }
 
-        _context.Movies.Remove(movie);
-        await _context.SaveChangesAsync();
-        DeleteUploadedPoster(movie.PosterPath);
-
-        TempData["Message"] = $"Фільм «{movie.Title}» видалено.";
+        TempData["Message"] = $"Фільм «{deleted.Title}» видалено.";
         return RedirectToAction(nameof(Index));
-    }
-
-    private async Task<Movie?> FindMovieAsync(int? id, bool asNoTracking)
-    {
-        if (id is null)
-        {
-            return null;
-        }
-
-        var query = _context.Movies.AsQueryable();
-        if (asNoTracking)
-        {
-            query = query.AsNoTracking();
-        }
-
-        return await query.FirstOrDefaultAsync(m => m.Id == id);
-    }
-
-    private async Task<string?> SavePosterAsync(IFormFile? file)
-    {
-        if (file is null || file.Length == 0)
-        {
-            return null;
-        }
-
-        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-        var webRoot = _environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot");
-        var uploadsDirectory = Path.Combine(webRoot, "images", "uploads");
-        Directory.CreateDirectory(uploadsDirectory);
-
-        var fileName = $"{Guid.NewGuid():N}{extension}";
-        var fullPath = Path.Combine(uploadsDirectory, fileName);
-
-        await using (var stream = System.IO.File.Create(fullPath))
-        {
-            await file.CopyToAsync(stream);
-        }
-
-        return $"{UploadsFolder}{fileName}";
-    }
-
-    private void DeleteUploadedPoster(string? posterPath)
-    {
-        if (string.IsNullOrWhiteSpace(posterPath))
-        {
-            return;
-        }
-
-        if (!posterPath.StartsWith(UploadsFolder, StringComparison.OrdinalIgnoreCase))
-        {
-            return;
-        }
-
-        var webRoot = _environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot");
-        var relative = posterPath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
-        var fullPath = Path.Combine(webRoot, relative);
-
-        try
-        {
-            if (System.IO.File.Exists(fullPath))
-            {
-                System.IO.File.Delete(fullPath);
-            }
-        }
-        catch (IOException)
-        {
-        }
-        catch (UnauthorizedAccessException)
-        {
-        }
     }
 }

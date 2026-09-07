@@ -4,7 +4,7 @@
 у вигляді адаптивної сітки з постерами. Усі дані зберігаються в **локальній базі
 даних SQL Server (LocalDB)** і зчитуються через **Entity Framework Core**.
 
-**Стек:** ASP.NET Core MVC (.NET 10) · Entity Framework Core 10 · SQL Server LocalDB · Razor · CSS Grid
+**Стек:** ASP.NET Core MVC (.NET 10) · Entity Framework Core 10 · SQL Server LocalDB · Razor · CSS Grid · Dependency Injection
 
 ---
 
@@ -56,10 +56,18 @@ WebApplication23333/
 ├── .gitignore
 ├── screenshots/                    # скріншоти інтерфейсу
 └── WebApplication23333/
-    ├── Program.cs                  # AddDbContext + UseSqlServer + EnsureCreated()
+    ├── Program.cs                  # тонкий: лише виклики extension-методів
     ├── appsettings.json            # рядок підключення DefaultConnection
+    ├── Extensions/                 # extension-методи (реєстрація в DI + конвеєр)
+    │   ├── ServiceCollectionExtensions.cs   # AddApplicationDatabase / AddApplicationServices
+    │   └── WebApplicationExtensions.cs      # EnsureDatabaseCreated / UseApplicationLocalization / UseApplicationErrorHandling
+    ├── Services/                   # сервісний шар — уся бізнес-логіка
+    │   ├── IMovieService.cs        # контракт: CRUD + перевірка унікальності назви
+    │   ├── MovieService.cs         # реалізація: EF Core + виклик IPosterStorage
+    │   ├── IPosterStorage.cs       # контракт роботи з файлами постерів
+    │   └── PosterStorage.cs        # збереження / видалення файлів у wwwroot
     ├── Controllers/
-    │   ├── MoviesController.cs     # повний CRUD: Index / Details / Create / Edit / Delete
+    │   ├── MoviesController.cs     # тонкий контролер: працює лише через IMovieService
     │   └── HomeController.cs       # редірект на каталог, обробка помилок і 404
     ├── Data/AppDbContext.cs        # DbContext + конфігурація + seed 10 фільмів
     ├── Models/Movie.cs             # Data Annotations + IValidatableObject
@@ -112,7 +120,8 @@ dotnet run
 Відкрити <https://localhost:7080> (або адресу з консолі).
 
 База даних **створюється автоматично** при першому запуску разом із
-початковими даними (`Database.EnsureCreated()` у `Program.cs`).
+початковими даними (`Database.EnsureCreated()` у extension-методі
+`EnsureDatabaseCreated()`, файл `Extensions/WebApplicationExtensions.cs`).
 
 > ⚠️ `EnsureCreated()` нічого не робить, якщо база `MovieCatalogDb` уже існує.
 > Якщо ви змінили модель `Movie` — видаліть базу (SQL Server Object Explorer →
@@ -137,29 +146,45 @@ dotnet run
 
 ## Як це працює
 
-**`Program.cs`** — реєстрація контексту та автостворення БД:
+**`Program.cs`** — після рефакторингу містить лише виклики extension-методів:
 
 ```csharp
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<AppDbContext>(o => o.UseSqlServer(connectionString));
+using WebApplication23333.Extensions;
 
-using (var scope = app.Services.CreateScope())
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllersWithViews();
+builder.Services.AddApplicationDatabase(builder.Configuration);
+builder.Services.AddApplicationServices();
+
+var app = builder.Build();
+
+app.EnsureDatabaseCreated();
+app.UseApplicationLocalization();
+app.UseApplicationErrorHandling();
+```
+
+**`MoviesController.Index`** — контролер лише просить дані в сервісу:
+
+```csharp
+public async Task<IActionResult> Index()
 {
-    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    context.Database.EnsureCreated();
+    var movies = await _movieService.GetAllAsync();
+    return View(movies);
 }
 ```
 
-**`MoviesController.Index`** — читання каталогу з бази:
+а сам запит до бази живе в `MovieService`:
 
 ```csharp
-var movies = await _context.Movies
-    .AsNoTracking()
-    .OrderByDescending(m => m.Rating)
-    .ThenBy(m => m.Title)
-    .ToListAsync();
-
-return View(movies);
+public async Task<IReadOnlyList<Movie>> GetAllAsync()
+{
+    return await _context.Movies
+        .AsNoTracking()
+        .OrderByDescending(m => m.Rating)
+        .ThenBy(m => m.Title)
+        .ToListAsync();
+}
 ```
 
 **`AppDbContext`** — конфігурація моделі та seed:
@@ -192,6 +217,97 @@ modelBuilder.Entity<Movie>().HasData(SeedMovies);   // 10 фільмів
 
 ---
 
+## Сервісний шар і Dependency Injection
+
+Раніше `MoviesController` сам звертався до `AppDbContext` і до файлової системи.
+Після рефакторингу вся ця робота винесена в **сервісний шар**, а контролер
+отримує сервіс через конструктор — **Dependency Injection**.
+
+### Інтерфейси та реалізації — папка `Services/`
+
+| Тип | Призначення |
+| --- | --- |
+| `IMovieService` / `MovieService` | бізнес-логіка каталогу: `GetAllAsync`, `GetByIdAsync`, `ExistsAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`, `IsTitleUniqueAsync` |
+| `IPosterStorage` / `PosterStorage` | робота з файлами постерів: збереження в `wwwroot/images/uploads`, видалення старого файлу, шлях до заглушки |
+
+`MovieService` отримує `AppDbContext` та `IPosterStorage` теж через конструктор —
+жоден клас не створює свої залежності сам (`new` немає ніде).
+
+### Extension-методи — папка `Extensions/`
+
+`ServiceCollectionExtensions` — реєстрація в DI-контейнері:
+
+```csharp
+public static IServiceCollection AddApplicationServices(this IServiceCollection services)
+{
+    // Scoped — час життя збігається з HTTP-запитом, як і в AppDbContext
+    services.AddScoped<IPosterStorage, PosterStorage>();
+    services.AddScoped<IMovieService, MovieService>();
+
+    return services;
+}
+
+public static IServiceCollection AddApplicationDatabase(
+    this IServiceCollection services, IConfiguration configuration)
+{
+    var connectionString = configuration.GetConnectionString("DefaultConnection");
+    services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
+
+    return services;
+}
+```
+
+`WebApplicationExtensions` — налаштування конвеєра: `EnsureDatabaseCreated()`,
+`UseApplicationLocalization()`, `UseApplicationErrorHandling()`.
+
+Усі методи повертають той самий об'єкт, тому виклики можна писати ланцюжком.
+
+### Тонкий контролер
+
+```csharp
+public class MoviesController : Controller
+{
+    private readonly IMovieService _movieService;
+
+    public MoviesController(IMovieService movieService)   // ← DI
+    {
+        _movieService = movieService;
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(Movie movie)
+    {
+        ModelState.Remove(nameof(Movie.PosterPath));
+
+        if (!ModelState.IsValid)
+        {
+            return View(movie);
+        }
+
+        var created = await _movieService.CreateAsync(movie);
+
+        TempData["Message"] = $"Фільм «{created.Title}» додано.";
+        return RedirectToAction(nameof(Index));
+    }
+}
+```
+
+У контролері не залишилось ні `AppDbContext`, ні `IWebHostEnvironment`, ні
+`System.IO` — тільки перевірка `ModelState`, виклик сервісу та вибір результату
+(`View` / `NotFound` / `RedirectToAction`).
+
+### Що це дає
+
+- **Єдина відповідальність:** контролер відповідає за HTTP, сервіс — за логіку.
+- **Повторне використання:** `UniqueMovieTitleAttribute` бере той самий
+  `IMovieService` із сервіс-провайдера замість прямого запиту до бази.
+- **Заміна реалізації:** можна підставити інший `IPosterStorage`
+  (наприклад, хмарне сховище), не змінюючи ні контролер, ні `MovieService`.
+- **Тестованість:** сервіс можна підмінити заглушкою в юніт-тестах контролера.
+
+---
+
 ## Валідація форм
 
 Перевірка виконується **двічі** — у браузері (щоб користувач одразу бачив помилку)
@@ -209,7 +325,7 @@ modelBuilder.Entity<Movie>().HasData(SeedMovies);   // 10 фільмів
 | `ReleaseYearAttribute` | рік від 1888 до «поточний + 1» (щоб можна було додати анонс) | так, `IClientModelValidator` |
 | `ForbiddenWordsAttribute` | текст не містить слів-заглушок (`lorem`, `test`, `asdf`…) | так, `IClientModelValidator` |
 | `PosterFileAttribute` | розширення та розмір обраного файлу постера | так, через File API |
-| `UniqueMovieTitleAttribute` | назва фільму унікальна в каталозі (звертається до `AppDbContext`) | ні — на клієнті цю ж перевірку робить `[Remote]` |
+| `UniqueMovieTitleAttribute` | назва фільму унікальна в каталозі (звертається до `IMovieService`) | ні — на клієнті цю ж перевірку робить `[Remote]` |
 
 Перші три реалізують `IClientModelValidator`: атрибут сам дописує до `<input>`
 теги `data-val-*`, а `wwwroot/js/validation.js` реєструє відповідні методи та
@@ -248,18 +364,21 @@ modelBuilder.Entity<Movie>().HasData(SeedMovies);   // 10 фільмів
 
 ### Завантаження постера
 
-Форми `Create` і `Edit` відправляються як `multipart/form-data`, файл приймається
-параметром `IFormFile? posterFile`:
+Форми `Create` і `Edit` відправляються як `multipart/form-data`, файл потрапляє
+у властивість `Movie.PosterFile` (`[NotMapped]`), а всю роботу з ним виконує
+сервіс `PosterStorage`:
 
 - дозволені формати — `.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`;
 - максимальний розмір — 5 МБ;
 - файл зберігається у `wwwroot/images/uploads` під іменем-`Guid`, у базу пише́ться лише шлях;
+- контролер про фізичні шляхи не знає — він викликає лише `IMovieService`;
 - якщо файл не обрано під час створення — підставляється заглушка `poster-placeholder.svg`;
 - при редагуванні старий завантажений постер видаляється, при видаленні фільму — теж.
 
 ### Сторінка 404
 
-У `Program.cs` підключено `app.UseStatusCodePagesWithReExecute("/Home/StatusCodeHandler/{0}")`.
+У extension-методі `UseApplicationErrorHandling()` підключено
+`app.UseStatusCodePagesWithReExecute("/Home/StatusCodeHandler/{0}")`.
 `HomeController.StatusCodeHandler` для коду 404 повертає власне подання
 `Views/Shared/NotFound.cshtml`, для інших кодів — `Error.cshtml`.
 Неіснуючий `id` у `Details` / `Edit` / `Delete` теж призводить до цієї сторінки.
@@ -277,7 +396,8 @@ dotnet ef migrations add InitialCreate
 dotnet ef database update
 ```
 
-І в `Program.cs` замінити `context.Database.EnsureCreated()` на `context.Database.Migrate()`.
+І в `Extensions/WebApplicationExtensions.cs` замінити `context.Database.EnsureCreated()`
+на `context.Database.Migrate()`.
 
 ---
 

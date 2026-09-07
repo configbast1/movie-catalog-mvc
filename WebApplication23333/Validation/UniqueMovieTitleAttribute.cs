@@ -1,13 +1,13 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using WebApplication23333.Data;
 using WebApplication23333.Models;
+using WebApplication23333.Services;
 
 namespace WebApplication23333.Validation;
 
 /// <summary>
 /// Кастомний атрибут: назва фільму має бути унікальною в каталозі.
-/// Атрибут звертається до бази через сервіс-провайдер, тому перевірка можлива
-/// лише на сервері; на клієнті ту саму перевірку виконує [Remote] через AJAX.
+/// Атрибут бере IMovieService із сервіс-провайдера (DI), тому про базу даних нічого не знає;
+/// на клієнті ту саму перевірку виконує [Remote] через AJAX.
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
 public sealed class UniqueMovieTitleAttribute : ValidationAttribute
@@ -24,7 +24,7 @@ public sealed class UniqueMovieTitleAttribute : ValidationAttribute
             return ValidationResult.Success;
         }
 
-        if (validationContext.GetService(typeof(AppDbContext)) is not AppDbContext context)
+        if (validationContext.GetService(typeof(IMovieService)) is not IMovieService movieService)
         {
             return ValidationResult.Success; // поза HTTP-запитом перевірити нічим
         }
@@ -32,10 +32,7 @@ public sealed class UniqueMovieTitleAttribute : ValidationAttribute
         var currentId = (validationContext.ObjectInstance as Movie)?.Id ?? 0;
         var normalized = title.Trim();
 
-        var duplicateExists = context.Movies
-            .Any(m => m.Id != currentId && m.Title == normalized);
-
-        if (!duplicateExists)
+        if (movieService.IsTitleUnique(normalized, currentId))
         {
             return ValidationResult.Success;
         }
