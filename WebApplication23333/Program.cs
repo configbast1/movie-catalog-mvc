@@ -4,7 +4,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 
-// реєстрація залежностей винесена в extension-методи
 builder.Services.AddApplicationDatabase(builder.Configuration);
 builder.Services.AddApplicationServices();
 
