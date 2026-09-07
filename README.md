@@ -61,9 +61,12 @@ WebApplication23333/
     ├── Extensions/                 # extension-методи (реєстрація в DI + конвеєр)
     │   ├── ServiceCollectionExtensions.cs   # AddApplicationDatabase / AddApplicationServices
     │   └── WebApplicationExtensions.cs      # EnsureDatabaseCreated / UseApplicationLocalization / UseApplicationErrorHandling
+    ├── Repositories/              # шар доступу до даних
+    │   ├── IRepository.cs          # узагальнений контракт репозиторію
+    │   └── Repository.cs           # реалізація над AppDbContext (єдине місце з EF Core)
     ├── Services/                   # сервісний шар — уся бізнес-логіка
     │   ├── IMovieService.cs        # контракт: CRUD + перевірка унікальності назви
-    │   ├── MovieService.cs         # реалізація: EF Core + виклик IPosterStorage
+    │   ├── MovieService.cs         # реалізація: IRepository<Movie> + IPosterStorage
     │   ├── IPosterStorage.cs       # контракт роботи з файлами постерів
     │   └── PosterStorage.cs        # збереження / видалення файлів у wwwroot
     ├── Controllers/
@@ -174,17 +177,28 @@ public async Task<IActionResult> Index()
 }
 ```
 
-а сам запит до бази живе в `MovieService`:
+сервіс формулює правило сортування й передає його в репозиторій:
 
 ```csharp
 public async Task<IReadOnlyList<Movie>> GetAllAsync()
 {
-    return await _context.Movies
-        .AsNoTracking()
-        .OrderByDescending(m => m.Rating)
-        .ThenBy(m => m.Title)
-        .ToListAsync();
+    return await _repository.ListAsync(
+        orderBy: query => query
+            .OrderByDescending(m => m.Rating)
+            .ThenBy(m => m.Title));
 }
+```
+
+а сам запит до бази виконує `Repository<TEntity>` — єдиний клас, що знає про EF Core:
+
+```csharp
+IQueryable<TEntity> query = _set;
+
+if (asNoTracking) query = query.AsNoTracking();
+if (predicate is not null) query = query.Where(predicate);
+if (orderBy is not null) query = orderBy(query);
+
+return await query.ToListAsync();
 ```
 
 **`AppDbContext`** — конфігурація моделі та seed:
@@ -198,7 +212,7 @@ modelBuilder.Entity<Movie>(entity =>
     entity.HasIndex(m => m.Rating);
 });
 
-modelBuilder.Entity<Movie>().HasData(SeedMovies);   // 10 фільмів
+modelBuilder.Entity<Movie>().HasData(SeedMovies);
 ```
 
 ---
@@ -230,7 +244,7 @@ modelBuilder.Entity<Movie>().HasData(SeedMovies);   // 10 фільмів
 | `IMovieService` / `MovieService` | бізнес-логіка каталогу: `GetAllAsync`, `GetByIdAsync`, `ExistsAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`, `IsTitleUniqueAsync` |
 | `IPosterStorage` / `PosterStorage` | робота з файлами постерів: збереження в `wwwroot/images/uploads`, видалення старого файлу, шлях до заглушки |
 
-`MovieService` отримує `AppDbContext` та `IPosterStorage` теж через конструктор —
+`MovieService` отримує `IRepository<Movie>` та `IPosterStorage` теж через конструктор —
 жоден клас не створює свої залежності сам (`new` немає ніде).
 
 ### Extension-методи — папка `Extensions/`
@@ -240,8 +254,17 @@ modelBuilder.Entity<Movie>().HasData(SeedMovies);   // 10 фільмів
 ```csharp
 public static IServiceCollection AddApplicationServices(this IServiceCollection services)
 {
+    services.AddApplicationRepositories();
+
     services.AddScoped<IPosterStorage, PosterStorage>();
     services.AddScoped<IMovieService, MovieService>();
+
+    return services;
+}
+
+public static IServiceCollection AddApplicationRepositories(this IServiceCollection services)
+{
+    services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
     return services;
 }
@@ -302,8 +325,77 @@ public class MoviesController : Controller
 - **Повторне використання:** `UniqueMovieTitleAttribute` бере той самий
   `IMovieService` із сервіс-провайдера замість прямого запиту до бази.
 - **Заміна реалізації:** можна підставити інший `IPosterStorage`
-  (наприклад, хмарне сховище), не змінюючи ні контролер, ні `MovieService`.
+  (наприклад, хмарне сховище) або інший `IRepository`, не змінюючи ні контролер,
+  ні `MovieService`.
 - **Тестованість:** сервіс можна підмінити заглушкою в юніт-тестах контролера.
+
+---
+
+## Шар репозиторію
+
+Сервіс не працює з `DbContext` напряму — між ними стоїть **репозиторій**.
+Ланцюжок залежностей:
+
+```
+MoviesController → IMovieService → IRepository<Movie> → AppDbContext → SQL Server
+     (HTTP)         (бізнес-логіка)   (доступ до даних)      (EF Core)
+```
+
+Кожна стрілка — це інтерфейс, який приходить через конструктор, тому жоден
+шар не знає про конкретну реалізацію наступного (Dependency Inversion Principle).
+
+### `IRepository<TEntity>` — папка `Repositories/`
+
+Узагальнений контракт: підходить для будь-якої сутності, не лише для `Movie`.
+
+```csharp
+public interface IRepository<TEntity> where TEntity : class
+{
+    Task<IReadOnlyList<TEntity>> ListAsync(
+        Expression<Func<TEntity, bool>>? predicate = null,
+        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
+        bool asNoTracking = true);
+
+    Task<TEntity?> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate, bool asNoTracking = false);
+    Task<bool> AnyAsync(Expression<Func<TEntity, bool>> predicate);
+    bool Any(Expression<Func<TEntity, bool>> predicate);
+
+    Task AddAsync(TEntity entity);
+    void Update(TEntity entity);
+    void Remove(TEntity entity);
+    Task<int> SaveChangesAsync();
+}
+```
+
+`Repository<TEntity>` — єдиний клас, який тримає `AppDbContext` і `DbSet<TEntity>`;
+усі виклики EF Core (`ToListAsync`, `AsNoTracking`, `SaveChangesAsync`) живуть тільки тут.
+
+### Реєстрація відкритого узагальненого типу
+
+```csharp
+services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+```
+
+Один рядок покриває всі сутності: `IRepository<Movie>` контейнер побудує сам.
+
+### Сервіс після рефакторингу
+
+Сортування Топ-10 — це бізнес-правило, тому воно залишається в сервісі й
+передається в репозиторій параметром, а не «зашивається» в доступ до даних:
+
+```csharp
+public async Task<IReadOnlyList<Movie>> GetAllAsync()
+{
+    return await _repository.ListAsync(
+        orderBy: query => query
+            .OrderByDescending(m => m.Rating)
+            .ThenBy(m => m.Title));
+}
+```
+
+У `MovieService` не залишилось жодної згадки про `AppDbContext` чи простір імен
+`Microsoft.EntityFrameworkCore` — замінити EF Core на будь-яке інше сховище
+можна, переписавши лише `Repository<TEntity>`.
 
 ---
 

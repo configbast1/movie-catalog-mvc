@@ -1,18 +1,20 @@
-﻿using Microsoft.EntityFrameworkCore;
-using WebApplication23333.Data;
-using WebApplication23333.Models;
+﻿using WebApplication23333.Models;
+using WebApplication23333.Repositories;
 
 namespace WebApplication23333.Services;
 
 public class MovieService : IMovieService
 {
-    private readonly AppDbContext _context;
+    private readonly IRepository<Movie> _repository;
     private readonly IPosterStorage _posterStorage;
     private readonly ILogger<MovieService> _logger;
 
-    public MovieService(AppDbContext context, IPosterStorage posterStorage, ILogger<MovieService> logger)
+    public MovieService(
+        IRepository<Movie> repository,
+        IPosterStorage posterStorage,
+        ILogger<MovieService> logger)
     {
-        _context = context;
+        _repository = repository;
         _posterStorage = posterStorage;
         _logger = logger;
     }
@@ -21,11 +23,10 @@ public class MovieService : IMovieService
 
     public async Task<IReadOnlyList<Movie>> GetAllAsync()
     {
-        return await _context.Movies
-            .AsNoTracking()
-            .OrderByDescending(m => m.Rating)
-            .ThenBy(m => m.Title)
-            .ToListAsync();
+        return await _repository.ListAsync(
+            orderBy: query => query
+                .OrderByDescending(m => m.Rating)
+                .ThenBy(m => m.Title));
     }
 
     public async Task<Movie?> GetByIdAsync(int? id)
@@ -35,12 +36,10 @@ public class MovieService : IMovieService
             return null;
         }
 
-        return await _context.Movies
-            .AsNoTracking()
-            .FirstOrDefaultAsync(m => m.Id == id);
+        return await _repository.FirstOrDefaultAsync(m => m.Id == id, asNoTracking: true);
     }
 
-    public Task<bool> ExistsAsync(int id) => _context.Movies.AnyAsync(m => m.Id == id);
+    public Task<bool> ExistsAsync(int id) => _repository.AnyAsync(m => m.Id == id);
 
     public async Task<Movie> CreateAsync(Movie movie)
     {
@@ -49,8 +48,8 @@ public class MovieService : IMovieService
         movie.Id = 0;
         movie.PosterPath = posterPath ?? _posterStorage.PlaceholderPath;
 
-        _context.Movies.Add(movie);
-        await _context.SaveChangesAsync();
+        await _repository.AddAsync(movie);
+        await _repository.SaveChangesAsync();
 
         _logger.LogInformation("Додано фільм {Title} (Id = {Id})", movie.Title, movie.Id);
 
@@ -59,7 +58,7 @@ public class MovieService : IMovieService
 
     public async Task<Movie?> UpdateAsync(int id, Movie movie)
     {
-        var existing = await _context.Movies.FirstOrDefaultAsync(m => m.Id == id);
+        var existing = await _repository.FirstOrDefaultAsync(m => m.Id == id);
         if (existing is null)
         {
             return null;
@@ -81,19 +80,8 @@ public class MovieService : IMovieService
             existing.PosterPath = newPosterPath;
         }
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!await ExistsAsync(id))
-            {
-                return null;
-            }
-
-            throw;
-        }
+        _repository.Update(existing);
+        await _repository.SaveChangesAsync();
 
         if (newPosterPath is not null)
         {
@@ -107,14 +95,14 @@ public class MovieService : IMovieService
 
     public async Task<Movie?> DeleteAsync(int id)
     {
-        var movie = await _context.Movies.FirstOrDefaultAsync(m => m.Id == id);
+        var movie = await _repository.FirstOrDefaultAsync(m => m.Id == id);
         if (movie is null)
         {
             return null;
         }
 
-        _context.Movies.Remove(movie);
-        await _context.SaveChangesAsync();
+        _repository.Remove(movie);
+        await _repository.SaveChangesAsync();
 
         _posterStorage.Delete(movie.PosterPath);
 
@@ -132,9 +120,7 @@ public class MovieService : IMovieService
 
         var normalized = title.Trim();
 
-        return !await _context.Movies
-            .AsNoTracking()
-            .AnyAsync(m => m.Id != excludeId && m.Title == normalized);
+        return !await _repository.AnyAsync(m => m.Id != excludeId && m.Title == normalized);
     }
 
     public bool IsTitleUnique(string? title, int excludeId)
@@ -146,8 +132,6 @@ public class MovieService : IMovieService
 
         var normalized = title.Trim();
 
-        return !_context.Movies
-            .AsNoTracking()
-            .Any(m => m.Id != excludeId && m.Title == normalized);
+        return !_repository.Any(m => m.Id != excludeId && m.Title == normalized);
     }
 }

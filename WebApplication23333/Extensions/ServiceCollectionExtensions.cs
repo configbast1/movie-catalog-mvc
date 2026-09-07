@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using WebApplication23333.Data;
+using WebApplication23333.Repositories;
 using WebApplication23333.Services;
 
 namespace WebApplication23333.Extensions;
@@ -18,8 +19,17 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
+    public static IServiceCollection AddApplicationRepositories(this IServiceCollection services)
+    {
+        services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+
+        return services;
+    }
+
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
+        services.AddApplicationRepositories();
+
         services.AddScoped<IPosterStorage, PosterStorage>();
         services.AddScoped<IMovieService, MovieService>();
 
