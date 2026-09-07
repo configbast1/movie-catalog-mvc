@@ -4,10 +4,6 @@ using WebApplication23333.Services;
 
 namespace WebApplication23333.Controllers;
 
-/// <summary>
-/// Тонкий контролер: жодних звернень до бази даних чи файлової системи —
-/// уся робота делегується IMovieService, який приходить через конструктор (DI).
-/// </summary>
 public class MoviesController : Controller
 {
     private readonly IMovieService _movieService;
@@ -34,10 +30,6 @@ public class MoviesController : Controller
         return View(movie);
     }
 
-    /// <summary>
-    /// Серверна частина клієнтської перевірки [Remote] на унікальність назви.
-    /// Викликається з браузера через AJAX і має повертати JSON true/false.
-    /// </summary>
     [AcceptVerbs("GET", "POST")]
     public async Task<IActionResult> CheckTitle(string? title, int id)
     {
@@ -54,7 +46,6 @@ public class MoviesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(Movie movie)
     {
-        // шлях до постера формується на сервері, тому з перевірки форми його прибираємо
         ModelState.Remove(nameof(Movie.PosterPath));
 
         if (!ModelState.IsValid)
