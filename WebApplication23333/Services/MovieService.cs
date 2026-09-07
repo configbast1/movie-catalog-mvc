@@ -4,7 +4,6 @@ using WebApplication23333.Models;
 
 namespace WebApplication23333.Services;
 
-/// <inheritdoc cref="IMovieService" />
 public class MovieService : IMovieService
 {
     private readonly AppDbContext _context;
@@ -45,7 +44,6 @@ public class MovieService : IMovieService
 
     public async Task<Movie> CreateAsync(Movie movie)
     {
-        // файл уже пройшов перевірку атрибутом PosterFile, лишилось зберегти
         var posterPath = await _posterStorage.SaveAsync(movie.PosterFile);
 
         movie.Id = 0;
@@ -97,7 +95,6 @@ public class MovieService : IMovieService
             throw;
         }
 
-        // старий постер прибираємо лише після успішного збереження
         if (newPosterPath is not null)
         {
             _posterStorage.Delete(previousPosterPath);

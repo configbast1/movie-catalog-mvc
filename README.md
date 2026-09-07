@@ -240,7 +240,6 @@ modelBuilder.Entity<Movie>().HasData(SeedMovies);   // 10 фільмів
 ```csharp
 public static IServiceCollection AddApplicationServices(this IServiceCollection services)
 {
-    // Scoped — час життя збігається з HTTP-запитом, як і в AppDbContext
     services.AddScoped<IPosterStorage, PosterStorage>();
     services.AddScoped<IMovieService, MovieService>();
 
@@ -269,7 +268,7 @@ public class MoviesController : Controller
 {
     private readonly IMovieService _movieService;
 
-    public MoviesController(IMovieService movieService)   // ← DI
+    public MoviesController(IMovieService movieService)
     {
         _movieService = movieService;
     }

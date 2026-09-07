@@ -4,12 +4,8 @@ using WebApplication23333.Data;
 
 namespace WebApplication23333.Extensions;
 
-/// <summary>
-/// Extension-методи для WebApplication: налаштування конвеєра обробки запитів.
-/// </summary>
 public static class WebApplicationExtensions
 {
-    /// <summary>Створює базу даних, якщо її ще немає.</summary>
     public static WebApplication EnsureDatabaseCreated(this WebApplication app)
     {
         using var scope = app.Services.CreateScope();
@@ -19,7 +15,6 @@ public static class WebApplicationExtensions
         return app;
     }
 
-    /// <summary>Інваріантна культура — щоб крапка/кома в оцінці розбиралися однаково.</summary>
     public static WebApplication UseApplicationLocalization(this WebApplication app)
     {
         var invariantCultures = new[] { CultureInfo.InvariantCulture };
@@ -34,7 +29,6 @@ public static class WebApplicationExtensions
         return app;
     }
 
-    /// <summary>Обробка помилок: сторінки статус-кодів та HSTS у продакшені.</summary>
     public static WebApplication UseApplicationErrorHandling(this WebApplication app)
     {
         if (!app.Environment.IsDevelopment())

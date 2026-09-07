@@ -1,6 +1,5 @@
 ﻿namespace WebApplication23333.Services;
 
-/// <inheritdoc cref="IPosterStorage" />
 public class PosterStorage : IPosterStorage
 {
     private const string UploadsFolder = "/images/uploads/";
@@ -48,7 +47,6 @@ public class PosterStorage : IPosterStorage
             return;
         }
 
-        // видаляємо лише те, що завантажив користувач
         if (!posterPath.StartsWith(UploadsFolder, StringComparison.OrdinalIgnoreCase))
         {
             return;
