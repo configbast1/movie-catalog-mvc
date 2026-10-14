@@ -16,6 +16,9 @@ public sealed class PosterFileAttribute : ValidationAttribute, IClientModelValid
 
     private long MaxBytes => MaxMegabytes * 1024L * 1024L;
 
+    // "JPG, JPEG, PNG, WEBP, GIF" — підставляється в перекладений текст помилки
+    private string FormatsList => string.Join(", ", Extensions.Select(e => e.TrimStart('.').ToUpperInvariant()));
+
     protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
     {
         if (value is not IFormFile file || file.Length == 0)
@@ -32,14 +35,14 @@ public sealed class PosterFileAttribute : ValidationAttribute, IClientModelValid
         if (!Extensions.Contains(extension))
         {
             return new ValidationResult(
-                $"Дозволені формати: {string.Join(", ", Extensions.Select(e => e.TrimStart('.').ToUpperInvariant()))}.",
+                validationContext.Localize("Validation.PosterExtensions", FormatsList),
                 memberNames);
         }
 
         if (file.Length > MaxBytes)
         {
             return new ValidationResult(
-                $"Розмір файлу не має перевищувати {MaxMegabytes} МБ.",
+                validationContext.Localize("Validation.PosterSize", MaxMegabytes),
                 memberNames);
         }
 
@@ -48,7 +51,7 @@ public sealed class PosterFileAttribute : ValidationAttribute, IClientModelValid
 
     public void AddValidation(ClientModelValidationContext context)
     {
-        var message = $"Дозволені формати: {string.Join(", ", Extensions.Select(e => e.TrimStart('.').ToUpperInvariant()))}. Максимальний розмір — {MaxMegabytes} МБ.";
+        var message = context.Localize("Validation.PosterClient", FormatsList, MaxMegabytes);
 
         ValidationAttributeHelpers.MergeAttribute(context.Attributes, "data-val", "true");
         ValidationAttributeHelpers.MergeAttribute(context.Attributes, "data-val-posterfile", message);

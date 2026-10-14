@@ -515,3 +515,19 @@ dotnet ef database update
 мотив + назва), чужих зображень у репозиторії немає. Постери, які користувач
 завантажує через форму, потрапляють у `wwwroot/images/uploads` і в репозиторій
 не комітяться.
+
+---
+
+## Локалізація інтерфейсу (UA / EN / FR)
+
+Сайт багатомовний: перемикач мови в шапці (`UA | EN | FR`), вибір зберігається в cookie на рік.
+
+- **Переклади** — JSON-файли `Kino.PL/Resources/SharedResource.{uk-UA|en-US|fr-FR}.json` з вкладеними ключами (`Catalog.Title`, `Validation.TitleRequired` …).
+- **`JsonStringLocalizer` / `JsonStringLocalizerFactory`** (`Kino.PL/Localization`) — власна реалізація `IStringLocalizer`, що читає JSON замість `.resx`, з кешем і fallback на українську.
+- **В'юхи** — `@L["ключ"]` (`IStringLocalizer<SharedResource>`) і `@H["ключ"]` для рядків з HTML; `<html lang>` змінюється разом з мовою.
+- **Валідація** — у `[Display]` і `ErrorMessage` стоять ключі, їх перекладає `AddDataAnnotationsLocalization`; власні атрибути та повідомлення model binding теж перекладені (і на сервері, і на клієнті).
+- **Визначення мови:** `?culture=en-US` → cookie → `Accept-Language` браузера → українська за замовчуванням.
+- Формат чисел лишається інваріантним (оцінка завжди вводиться як `8.5`), перекладається лише текст.
+- Дані з БД (назви й описи фільмів) не перекладаються — це контент, а не інтерфейс.
+
+Щоб додати мову: дописати її в `Localization/AppCultures.cs` і покласти поруч новий `SharedResource.{код}.json`.

@@ -1,15 +1,15 @@
 @model MovieViewModel
 
 @{
-    ViewData["Title"] = $"Редагування — {Model.Title}";
+    ViewData["Title"] = L["Edit.Title", Model.Title];
 }
 
-<a class="back-link" asp-action="Details" asp-route-id="@Model.Id">← Назад до фільму</a>
+<a class="back-link" asp-action="Details" asp-route-id="@Model.Id">@L["Common.BackToMovie"]</a>
 
 <section class="page-head">
-    <p class="eyebrow">Редагування</p>
+    <p class="eyebrow">@L["Edit.Eyebrow"]</p>
     <h1>@Model.Title</h1>
-    <p class="lead">Змініть потрібні поля. Новий постер замінить поточний.</p>
+    <p class="lead">@L["Edit.Lead"]</p>
 </section>
 
 <form asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" class="form-card" novalidate>
@@ -65,10 +65,10 @@
         <div class="form-field span-2">
             <label asp-for="PosterFile"></label>
             <div class="poster-preview">
-                <img src="@Model.PosterPath" alt="Поточний постер" />
+                <img src="@Model.PosterPath" alt="@L["Common.CurrentPosterAlt"]" />
                 <div>
                     <input asp-for="PosterFile" type="file" accept="image/*" class="input file-input" />
-                    <span class="field-hint">JPG, JPEG, PNG, WEBP або GIF, до 5 МБ. Залиште поле порожнім, щоб зберегти поточний постер.</span>
+                    <span class="field-hint">@L["Edit.PosterHint"]</span>
                     <!-- Validation Message Tag Helper: помилка конкретного поля -->
                     <span asp-validation-for="PosterFile" class="field-error"></span>
                 </div>
@@ -77,8 +77,8 @@
     </div>
 
     <div class="form-actions">
-        <button type="submit" class="btn btn-accent">Зберегти зміни</button>
-        <a class="btn btn-ghost" asp-action="Details" asp-route-id="@Model.Id">Скасувати</a>
+        <button type="submit" class="btn btn-accent">@L["Common.SaveChanges"]</button>
+        <a class="btn btn-ghost" asp-action="Details" asp-route-id="@Model.Id">@L["Common.Cancel"]</a>
     </div>
 </form>
 

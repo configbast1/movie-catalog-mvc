@@ -1,16 +1,13 @@
 @model IEnumerable<MovieDto>
 
 @{
-    ViewData["Title"] = "Топ-10 фільмів";
+    ViewData["Title"] = L["Top.Title"];
 }
 
 <section class="page-head">
-    <p class="eyebrow">Особистий рейтинг</p>
-    <h1>10 найкращих фільмів</h1>
-    <p class="lead">
-        Дані завантажено з локальної бази даних SQL Server (<code>MovieCatalogDb</code>)
-        через Entity Framework Core. Усього фільмів у списку: <strong>@Model.Count()</strong>.
-    </p>
+    <p class="eyebrow">@L["Catalog.Eyebrow"]</p>
+    <h1>@L["Top.Heading"]</h1>
+    <p class="lead">@H["Catalog.Lead", "MovieCatalogDb", Model.Count()]</p>
 </section>
 
 <div class="movie-grid">
@@ -22,7 +19,7 @@
         <article class="movie-card">
             <a class="poster-link" asp-controller="Home" asp-action="Details" asp-route-id="@movie.Id">
                 <div class="poster-wrap">
-                    <img src="@movie.PosterPath" alt="Постер фільму «@movie.Title»" loading="lazy" />
+                    <img src="@movie.PosterPath" alt="@L["Common.PosterAlt", movie.Title]" loading="lazy" />
                     <span class="rank">#@position</span>
                     <span class="rating">@movie.Rating.ToString("0.0")</span>
                 </div>

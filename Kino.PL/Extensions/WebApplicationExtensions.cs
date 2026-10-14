@@ -1,5 +1,3 @@
-using System.Globalization;
-using Microsoft.AspNetCore.Localization;
 using Kino.DAL.Data;
 
 namespace Kino.PL.Extensions;
@@ -17,14 +15,8 @@ public static class WebApplicationExtensions
 
     public static WebApplication UseApplicationLocalization(this WebApplication app)
     {
-        var invariantCultures = new[] { CultureInfo.InvariantCulture };
-
-        app.UseRequestLocalization(new RequestLocalizationOptions
-        {
-            DefaultRequestCulture = new RequestCulture(CultureInfo.InvariantCulture),
-            SupportedCultures = invariantCultures,
-            SupportedUICultures = invariantCultures
-        });
+        // налаштування (мови, порядок провайдерів) задані в AddApplicationLocalization
+        app.UseRequestLocalization();
 
         return app;
     }

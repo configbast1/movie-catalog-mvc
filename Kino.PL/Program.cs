@@ -5,7 +5,8 @@ using Kino.PL.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllersWithViews();
+// MVC + локалізація інтерфейсу (JSON-переклади, Razor-в'юхи, валідація)
+builder.Services.AddApplicationLocalization();
 
 // один виклик підключає весь бізнес-рівень, а він усередині підключає рівень даних
 builder.Services.AddBusinessLogicLayer(builder.Configuration);

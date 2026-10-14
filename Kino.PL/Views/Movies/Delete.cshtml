@@ -1,20 +1,20 @@
 @model MovieDto
 
 @{
-    ViewData["Title"] = $"Видалення — {Model.Title}";
+    ViewData["Title"] = L["Delete.Title", Model.Title];
 }
 
-<a class="back-link" asp-action="Details" asp-route-id="@Model.Id">← Назад до фільму</a>
+<a class="back-link" asp-action="Details" asp-route-id="@Model.Id">@L["Common.BackToMovie"]</a>
 
 <section class="page-head">
-    <p class="eyebrow danger">Видалення</p>
-    <h1>Видалити фільм?</h1>
-    <p class="lead">Цю дію не можна скасувати. Фільм буде остаточно видалено з бази даних.</p>
+    <p class="eyebrow danger">@L["Delete.Eyebrow"]</p>
+    <h1>@L["Delete.Heading"]</h1>
+    <p class="lead">@L["Delete.Lead"]</p>
 </section>
 
 <div class="confirm-card">
     <div class="confirm-poster">
-        <img src="@Model.PosterPath" alt="Постер фільму «@Model.Title»" />
+        <img src="@Model.PosterPath" alt="@L["Common.PosterAlt", Model.Title]" />
     </div>
 
     <div class="confirm-body">
@@ -36,8 +36,8 @@
 
         <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="form-actions">
             <input type="hidden" asp-for="Id" />
-            <button type="submit" class="btn btn-danger">Так, видалити</button>
-            <a class="btn btn-ghost" asp-action="Index">Скасувати</a>
+            <button type="submit" class="btn btn-danger">@L["Delete.Confirm"]</button>
+            <a class="btn btn-ghost" asp-action="Index">@L["Common.Cancel"]</a>
         </form>
     </div>
 </div>

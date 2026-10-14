@@ -1,0 +1,108 @@
+{
+  "Layout": {
+    "SiteName": "Movie Catalog",
+    "Footer": "© {0} Movie Catalog — ASP.NET Core MVC + SQL Server (LocalDB) + EF Core",
+    "Language": "Site language"
+  },
+  "Nav": {
+    "Catalog": "Catalog",
+    "AddMovie": "+ Add movie"
+  },
+  "Common": {
+    "Save": "Save",
+    "SaveChanges": "Save changes",
+    "Cancel": "Cancel",
+    "Details": "Details",
+    "Edit": "Edit",
+    "Delete": "Delete",
+    "BackToCatalog": "← Back to catalog",
+    "BackToMovie": "← Back to movie",
+    "BackToTop": "← Back to Top 10",
+    "ToHome": "Go to home page",
+    "PosterAlt": "Poster of “{0}”",
+    "CurrentPosterAlt": "Current poster"
+  },
+  "Catalog": {
+    "Title": "Movie catalog",
+    "Eyebrow": "Personal ranking",
+    "Lead": "Data is loaded from a local SQL Server database (<code>{0}</code>) via Entity Framework Core. Movies in the list: <strong>{1}</strong>.",
+    "Empty": "The list is empty. Add the first movie."
+  },
+  "Top": {
+    "Title": "Top 10 movies",
+    "Heading": "10 best movies"
+  },
+  "Create": {
+    "Title": "New movie",
+    "Eyebrow": "Create",
+    "Heading": "Add a movie",
+    "Lead": "Fill in the fields below. You can upload a poster from your device.",
+    "PosterHint": "JPG, JPEG, PNG, WEBP or GIF, up to 5 MB. If no file is selected, a placeholder will be used."
+  },
+  "Edit": {
+    "Title": "Editing — {0}",
+    "Eyebrow": "Edit",
+    "Lead": "Change the fields you need. A new poster will replace the current one.",
+    "PosterHint": "JPG, JPEG, PNG, WEBP or GIF, up to 5 MB. Leave the field empty to keep the current poster."
+  },
+  "Delete": {
+    "Title": "Deleting — {0}",
+    "Eyebrow": "Delete",
+    "Heading": "Delete this movie?",
+    "Lead": "This action cannot be undone. The movie will be permanently removed from the database.",
+    "Confirm": "Yes, delete"
+  },
+  "Messages": {
+    "Created": "Movie “{0}” has been added.",
+    "Updated": "Movie “{0}” has been updated.",
+    "Deleted": "Movie “{0}” has been deleted."
+  },
+  "Errors": {
+    "Title": "Error",
+    "Heading": "Something went wrong",
+    "Lead": "An error occurred while processing your request. Try going back to the home page.",
+    "NotFoundTitle": "Page not found",
+    "NotFoundHeading": "This page does not exist",
+    "NotFoundLead": "The movie may have been deleted, or you followed an outdated link."
+  },
+  "Privacy": {
+    "Title": "Privacy policy",
+    "Text": "This site does not collect personal data. The selected language is stored only in a cookie in your browser."
+  },
+  "Fields": {
+    "Title": "Title",
+    "OriginalTitle": "Original title",
+    "Director": "Director",
+    "Genre": "Genre",
+    "ReleaseYear": "Release year",
+    "PosterPath": "Poster",
+    "PosterFile": "Poster (file from your device)",
+    "Description": "Short description",
+    "Rating": "Rating"
+  },
+  "Validation": {
+    "TitleRequired": "Enter the movie title",
+    "TitleLength": "The title must be between {2} and {1} characters long",
+    "TitleExists": "A movie with this title is already in the catalog",
+    "MaxLength": "Maximum {1} characters",
+    "DirectorRequired": "Enter the director",
+    "DirectorLength": "The director's name must be between {2} and {1} characters long",
+    "DirectorPattern": "The director's name may contain only letters, spaces, apostrophes, periods and hyphens",
+    "GenreRequired": "Enter the genre",
+    "DescriptionRequired": "Add a short description",
+    "DescriptionLength": "The description must be between {2} and {1} characters long",
+    "RatingRange": "The rating must be between {1} and {2}",
+    "ForbiddenWords": "The “{0}” field contains the placeholder word “{1}”. Please enter real data.",
+    "ReleaseYear": "The release year must be between {1} and {2}.",
+    "PosterExtensions": "Allowed formats: {0}.",
+    "PosterSize": "The file size must not exceed {0} MB.",
+    "PosterClient": "Allowed formats: {0}. Maximum size — {1} MB.",
+    "UniqueTitle": "A movie titled “{0}” is already in the catalog.",
+    "OriginalDuplicates": "The original title duplicates the main one — leave the field empty or enter the title in the original language.",
+    "RatingTooEarly": "The {0} movie has not been released yet — it is too early to rate it.",
+    "ValueMustNotBeNull": "The “{0}” field cannot be empty.",
+    "ValueIsInvalid": "The value “{0}” is invalid.",
+    "AttemptedValueIsInvalid": "The value “{0}” is not valid for the “{1}” field.",
+    "MustBeNumber": "The “{0}” field must be a number."
+  }
+}

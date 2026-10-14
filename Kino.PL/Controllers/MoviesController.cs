@@ -1,6 +1,7 @@
 using Kino.BLL.Interfaces;
 using Kino.PL.ViewModels;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 
 namespace Kino.PL.Controllers;
 
@@ -9,10 +10,12 @@ namespace Kino.PL.Controllers;
 public class MoviesController : Controller
 {
     private readonly IMovieService _movieService;
+    private readonly IStringLocalizer<SharedResource> _localizer;
 
-    public MoviesController(IMovieService movieService)
+    public MoviesController(IMovieService movieService, IStringLocalizer<SharedResource> localizer)
     {
         _movieService = movieService;
+        _localizer = localizer;
     }
 
     public async Task<IActionResult> Index()
@@ -57,7 +60,7 @@ public class MoviesController : Controller
 
         var created = await _movieService.CreateAsync(model.ToDto());
 
-        TempData["Message"] = $"Фільм «{created.Title}» додано.";
+        TempData["Message"] = _localizer["Messages.Created", created.Title].Value;
         return RedirectToAction(nameof(Index));
     }
 
@@ -92,7 +95,7 @@ public class MoviesController : Controller
             return NotFound();
         }
 
-        TempData["Message"] = $"Фільм «{updated.Title}» оновлено.";
+        TempData["Message"] = _localizer["Messages.Updated", updated.Title].Value;
         return RedirectToAction(nameof(Details), new { id = updated.Id });
     }
 
@@ -118,7 +121,7 @@ public class MoviesController : Controller
             return NotFound();
         }
 
-        TempData["Message"] = $"Фільм «{deleted.Title}» видалено.";
+        TempData["Message"] = _localizer["Messages.Deleted", deleted.Title].Value;
         return RedirectToAction(nameof(Index));
     }
 }

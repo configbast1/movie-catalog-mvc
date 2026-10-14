@@ -1,18 +1,15 @@
 @model IEnumerable<MovieDto>
 
 @{
-    ViewData["Title"] = "Каталог фільмів";
+    ViewData["Title"] = L["Catalog.Title"];
 }
 
 <section class="page-head">
-    <p class="eyebrow">Особистий рейтинг</p>
-    <h1>Каталог фільмів</h1>
-    <p class="lead">
-        Дані завантажено з локальної бази даних SQL Server (<code>MovieCatalogDb</code>)
-        через Entity Framework Core. Усього фільмів у списку: <strong>@Model.Count()</strong>.
-    </p>
+    <p class="eyebrow">@L["Catalog.Eyebrow"]</p>
+    <h1>@L["Catalog.Title"]</h1>
+    <p class="lead">@H["Catalog.Lead", "MovieCatalogDb", Model.Count()]</p>
     <div class="page-actions">
-        <a class="btn btn-accent" asp-action="Create">+ Додати фільм</a>
+        <a class="btn btn-accent" asp-action="Create">@L["Nav.AddMovie"]</a>
     </div>
 </section>
 
@@ -21,8 +18,8 @@
 @if (!Model.Any())
 {
     <div class="empty-state">
-        <p>Список порожній. Додайте перший фільм.</p>
-        <a class="btn btn-accent" asp-action="Create">+ Додати фільм</a>
+        <p>@L["Catalog.Empty"]</p>
+        <a class="btn btn-accent" asp-action="Create">@L["Nav.AddMovie"]</a>
     </div>
 }
 else
@@ -36,7 +33,7 @@ else
             <article class="movie-card">
                 <a class="poster-link" asp-action="Details" asp-route-id="@movie.Id">
                     <div class="poster-wrap">
-                        <img src="@movie.PosterPath" alt="Постер фільму «@movie.Title»" loading="lazy" />
+                        <img src="@movie.PosterPath" alt="@L["Common.PosterAlt", movie.Title]" loading="lazy" />
                         @if (position <= 10)
                         {
                             <span class="rank">#@position</span>
@@ -64,9 +61,9 @@ else
                     <p class="movie-description">@movie.Description</p>
 
                     <div class="card-actions">
-                        <a class="btn btn-ghost btn-sm" asp-action="Details" asp-route-id="@movie.Id">Деталі</a>
-                        <a class="btn btn-ghost btn-sm" asp-action="Edit" asp-route-id="@movie.Id">Редагувати</a>
-                        <a class="btn btn-danger btn-sm" asp-action="Delete" asp-route-id="@movie.Id">Видалити</a>
+                        <a class="btn btn-ghost btn-sm" asp-action="Details" asp-route-id="@movie.Id">@L["Common.Details"]</a>
+                        <a class="btn btn-ghost btn-sm" asp-action="Edit" asp-route-id="@movie.Id">@L["Common.Edit"]</a>
+                        <a class="btn btn-danger btn-sm" asp-action="Delete" asp-route-id="@movie.Id">@L["Common.Delete"]</a>
                     </div>
                 </div>
             </article>

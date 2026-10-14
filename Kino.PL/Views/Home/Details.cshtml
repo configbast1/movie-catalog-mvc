@@ -4,11 +4,11 @@
     ViewData["Title"] = Model.Title;
 }
 
-<a class="back-link" asp-controller="Home" asp-action="Index">← Назад до Топ-10</a>
+<a class="back-link" asp-controller="Home" asp-action="Index">@L["Common.BackToTop"]</a>
 
 <article class="movie-details">
     <div class="details-poster">
-        <img src="@Model.PosterPath" alt="Постер фільму «@Model.Title»" />
+        <img src="@Model.PosterPath" alt="@L["Common.PosterAlt", Model.Title]" />
     </div>
 
     <div class="details-body">

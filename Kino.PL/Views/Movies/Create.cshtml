@@ -1,15 +1,15 @@
 @model MovieViewModel
 
 @{
-    ViewData["Title"] = "Новий фільм";
+    ViewData["Title"] = L["Create.Title"];
 }
 
-<a class="back-link" asp-action="Index">← Назад до каталогу</a>
+<a class="back-link" asp-action="Index">@L["Common.BackToCatalog"]</a>
 
 <section class="page-head">
-    <p class="eyebrow">Створення</p>
-    <h1>Додати фільм</h1>
-    <p class="lead">Заповніть поля нижче. Постер можна завантажити зі свого пристрою.</p>
+    <p class="eyebrow">@L["Create.Eyebrow"]</p>
+    <h1>@L["Create.Heading"]</h1>
+    <p class="lead">@L["Create.Lead"]</p>
 </section>
 
 <form asp-action="Create" method="post" enctype="multipart/form-data" class="form-card" novalidate>
@@ -62,15 +62,15 @@
         <div class="form-field span-2">
             <label asp-for="PosterFile"></label>
             <input asp-for="PosterFile" type="file" accept="image/*" class="input file-input" />
-            <span class="field-hint">JPG, JPEG, PNG, WEBP або GIF, до 5 МБ. Якщо не обрати файл — буде використано заглушку.</span>
+            <span class="field-hint">@L["Create.PosterHint"]</span>
             <!-- Validation Message Tag Helper: помилка конкретного поля -->
             <span asp-validation-for="PosterFile" class="field-error"></span>
         </div>
     </div>
 
     <div class="form-actions">
-        <button type="submit" class="btn btn-accent">Зберегти</button>
-        <a class="btn btn-ghost" asp-action="Index">Скасувати</a>
+        <button type="submit" class="btn btn-accent">@L["Common.Save"]</button>
+        <a class="btn btn-ghost" asp-action="Index">@L["Common.Cancel"]</a>
     </div>
 </form>
 

@@ -8,6 +8,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- файли перекладів мають лежати поруч зі зібраним застосунком -->
+    <Content Update="Resources\**\*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Kino.BLL\Kino.BLL.csproj" />
   </ItemGroup>
 

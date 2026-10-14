@@ -89,6 +89,56 @@ body {
     border-color: var(--accent);
 }
 
+/* ---------- перемикач мови ---------- */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.site-nav {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.lang-switcher {
+    display: inline-flex;
+    padding: 3px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--bg-soft);
+}
+
+.lang-switcher a {
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    padding: 0.28rem 0.6rem;
+    border-radius: 999px;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.lang-switcher a:hover {
+    color: var(--accent);
+}
+
+.lang-switcher a.is-active {
+    color: var(--bg);
+    background: var(--accent);
+}
+
+@media (max-width: 720px) {
+    .header-inner {
+        flex-wrap: wrap;
+        gap: 0.7rem;
+    }
+}
+
 main {
     flex: 1 0 auto;
     padding-bottom: 3rem;

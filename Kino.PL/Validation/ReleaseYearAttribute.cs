@@ -18,13 +18,8 @@ public sealed class ReleaseYearAttribute : ValidationAttribute, IClientModelVali
 
     public int MaxYear => DateTime.Now.Year + YearsAhead;
 
-    public ReleaseYearAttribute()
-        : base("Рік випуску має бути в межах {1}–{2}.")
-    {
-    }
-
-    public override string FormatErrorMessage(string name)
-        => string.Format(ErrorMessageString, name, MinYear, MaxYear);
+    // ключ перекладу в Resources/SharedResource.{culture}.json
+    private const string MessageKey = "Validation.ReleaseYear";
 
     protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
     {
@@ -36,7 +31,7 @@ public sealed class ReleaseYearAttribute : ValidationAttribute, IClientModelVali
         if (value is not int year || year < MinYear || year > MaxYear)
         {
             return new ValidationResult(
-                FormatErrorMessage(validationContext.DisplayName),
+                validationContext.Localize(MessageKey, validationContext.DisplayName, MinYear, MaxYear),
                 validationContext.MemberName is null ? null : new[] { validationContext.MemberName });
         }
 
@@ -46,7 +41,7 @@ public sealed class ReleaseYearAttribute : ValidationAttribute, IClientModelVali
     // формує data-val-* атрибути, які читає jquery.validate.unobtrusive
     public void AddValidation(ClientModelValidationContext context)
     {
-        var message = FormatErrorMessage(context.ModelMetadata.GetDisplayName());
+        var message = context.Localize(MessageKey, context.ModelMetadata.GetDisplayName(), MinYear, MaxYear);
 
         ValidationAttributeHelpers.MergeAttribute(context.Attributes, "data-val", "true");
         ValidationAttributeHelpers.MergeAttribute(context.Attributes, "data-val-releaseyear", message);

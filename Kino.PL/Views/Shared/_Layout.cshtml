@@ -1,9 +1,10 @@
-﻿<!DOCTYPE html>
-<html lang="uk">
+@using System.Globalization
+<!DOCTYPE html>
+<html lang="@CultureInfo.CurrentUICulture.TwoLetterISOLanguageName">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] — Кінокаталог</title>
+    <title>@ViewData["Title"] — @L["Layout.SiteName"]</title>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
@@ -11,12 +12,15 @@
         <div class="container header-inner">
             <a class="brand" asp-controller="Movies" asp-action="Index">
                 <span class="brand-mark">🎬</span>
-                <span class="brand-text">Кінокаталог</span>
+                <span class="brand-text">@L["Layout.SiteName"]</span>
             </a>
-            <nav class="site-nav">
-                <a asp-controller="Movies" asp-action="Index">Каталог</a>
-                <a asp-controller="Movies" asp-action="Create">+ Додати фільм</a>
-            </nav>
+            <div class="header-actions">
+                <nav class="site-nav">
+                    <a asp-controller="Movies" asp-action="Index">@L["Nav.Catalog"]</a>
+                    <a asp-controller="Movies" asp-action="Create">@L["Nav.AddMovie"]</a>
+                </nav>
+                <partial name="_LanguageSwitcher" />
+            </div>
         </div>
     </header>
 
@@ -26,7 +30,7 @@
 
     <footer class="site-footer">
         <div class="container">
-            <p>© @DateTime.Now.Year Кінокаталог — ASP.NET Core MVC + SQL Server (LocalDB) + EF Core</p>
+            <p>@L["Layout.Footer", DateTime.Now.Year]</p>
         </div>
     </footer>
 

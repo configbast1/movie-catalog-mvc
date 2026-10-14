@@ -1,0 +1,108 @@
+{
+  "Layout": {
+    "SiteName": "Ciné-catalogue",
+    "Footer": "© {0} Ciné-catalogue — ASP.NET Core MVC + SQL Server (LocalDB) + EF Core",
+    "Language": "Langue du site"
+  },
+  "Nav": {
+    "Catalog": "Catalogue",
+    "AddMovie": "+ Ajouter un film"
+  },
+  "Common": {
+    "Save": "Enregistrer",
+    "SaveChanges": "Enregistrer les modifications",
+    "Cancel": "Annuler",
+    "Details": "Détails",
+    "Edit": "Modifier",
+    "Delete": "Supprimer",
+    "BackToCatalog": "← Retour au catalogue",
+    "BackToMovie": "← Retour au film",
+    "BackToTop": "← Retour au Top 10",
+    "ToHome": "Retour à l'accueil",
+    "PosterAlt": "Affiche du film « {0} »",
+    "CurrentPosterAlt": "Affiche actuelle"
+  },
+  "Catalog": {
+    "Title": "Catalogue de films",
+    "Eyebrow": "Classement personnel",
+    "Lead": "Les données sont chargées depuis une base SQL Server locale (<code>{0}</code>) via Entity Framework Core. Nombre de films dans la liste : <strong>{1}</strong>.",
+    "Empty": "La liste est vide. Ajoutez le premier film."
+  },
+  "Top": {
+    "Title": "Top 10 des films",
+    "Heading": "Les 10 meilleurs films"
+  },
+  "Create": {
+    "Title": "Nouveau film",
+    "Eyebrow": "Création",
+    "Heading": "Ajouter un film",
+    "Lead": "Remplissez les champs ci-dessous. Vous pouvez télécharger une affiche depuis votre appareil.",
+    "PosterHint": "JPG, JPEG, PNG, WEBP ou GIF, jusqu'à 5 Mo. Sans fichier, une image par défaut sera utilisée."
+  },
+  "Edit": {
+    "Title": "Modification — {0}",
+    "Eyebrow": "Modification",
+    "Lead": "Modifiez les champs nécessaires. Une nouvelle affiche remplacera l'actuelle.",
+    "PosterHint": "JPG, JPEG, PNG, WEBP ou GIF, jusqu'à 5 Mo. Laissez le champ vide pour conserver l'affiche actuelle."
+  },
+  "Delete": {
+    "Title": "Suppression — {0}",
+    "Eyebrow": "Suppression",
+    "Heading": "Supprimer ce film ?",
+    "Lead": "Cette action est irréversible. Le film sera définitivement supprimé de la base de données.",
+    "Confirm": "Oui, supprimer"
+  },
+  "Messages": {
+    "Created": "Le film « {0} » a été ajouté.",
+    "Updated": "Le film « {0} » a été mis à jour.",
+    "Deleted": "Le film « {0} » a été supprimé."
+  },
+  "Errors": {
+    "Title": "Erreur",
+    "Heading": "Une erreur s'est produite",
+    "Lead": "Une erreur est survenue lors du traitement de la requête. Essayez de revenir à la page d'accueil.",
+    "NotFoundTitle": "Page introuvable",
+    "NotFoundHeading": "Cette page n'existe pas",
+    "NotFoundLead": "Le film a peut-être été supprimé, ou vous avez suivi un lien obsolète."
+  },
+  "Privacy": {
+    "Title": "Politique de confidentialité",
+    "Text": "Ce site ne collecte aucune donnée personnelle. La langue choisie est enregistrée uniquement dans un cookie de votre navigateur."
+  },
+  "Fields": {
+    "Title": "Titre du film",
+    "OriginalTitle": "Titre original",
+    "Director": "Réalisateur",
+    "Genre": "Genre",
+    "ReleaseYear": "Année de sortie",
+    "PosterPath": "Affiche",
+    "PosterFile": "Affiche (fichier de l'appareil)",
+    "Description": "Courte description",
+    "Rating": "Note"
+  },
+  "Validation": {
+    "TitleRequired": "Indiquez le titre du film",
+    "TitleLength": "Le titre doit contenir entre {2} et {1} caractères",
+    "TitleExists": "Un film portant ce titre existe déjà dans le catalogue",
+    "MaxLength": "{1} caractères maximum",
+    "DirectorRequired": "Indiquez le réalisateur",
+    "DirectorLength": "Le nom du réalisateur doit contenir entre {2} et {1} caractères",
+    "DirectorPattern": "Le nom du réalisateur ne peut contenir que des lettres, des espaces, des apostrophes, des points et des tirets",
+    "GenreRequired": "Indiquez le genre",
+    "DescriptionRequired": "Ajoutez une courte description",
+    "DescriptionLength": "La description doit contenir entre {2} et {1} caractères",
+    "RatingRange": "La note doit être comprise entre {1} et {2}",
+    "ForbiddenWords": "Le champ « {0} » contient le mot de remplissage « {1} ». Saisissez de vraies données.",
+    "ReleaseYear": "L'année de sortie doit être comprise entre {1} et {2}.",
+    "PosterExtensions": "Formats autorisés : {0}.",
+    "PosterSize": "La taille du fichier ne doit pas dépasser {0} Mo.",
+    "PosterClient": "Formats autorisés : {0}. Taille maximale : {1} Mo.",
+    "UniqueTitle": "Un film intitulé « {0} » existe déjà dans le catalogue.",
+    "OriginalDuplicates": "Le titre original reprend le titre principal — laissez le champ vide ou saisissez le titre dans la langue d'origine.",
+    "RatingTooEarly": "Le film de {0} n'est pas encore sorti — il est trop tôt pour le noter.",
+    "ValueMustNotBeNull": "Le champ « {0} » ne peut pas être vide.",
+    "ValueIsInvalid": "La valeur « {0} » n'est pas valide.",
+    "AttemptedValueIsInvalid": "La valeur « {0} » n'est pas valide pour le champ « {1} ».",
+    "MustBeNumber": "Le champ « {0} » doit être un nombre."
+  }
+}

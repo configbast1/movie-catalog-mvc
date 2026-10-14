@@ -15,10 +15,8 @@ public sealed class ForbiddenWordsAttribute : ValidationAttribute, IClientModelV
 
     public string[] Words { get; init; } = DefaultWords;
 
-    public ForbiddenWordsAttribute()
-        : base("Поле «{0}» містить слово-заглушку «{1}». Введіть справжні дані.")
-    {
-    }
+    // ключ перекладу в Resources/SharedResource.{culture}.json
+    private const string MessageKey = "Validation.ForbiddenWords";
 
     protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
     {
@@ -35,7 +33,7 @@ public sealed class ForbiddenWordsAttribute : ValidationAttribute, IClientModelV
             return ValidationResult.Success;
         }
 
-        var message = string.Format(ErrorMessageString, validationContext.DisplayName, found);
+        var message = validationContext.Localize(MessageKey, validationContext.DisplayName, found);
 
         return new ValidationResult(
             message,
@@ -45,7 +43,7 @@ public sealed class ForbiddenWordsAttribute : ValidationAttribute, IClientModelV
     public void AddValidation(ClientModelValidationContext context)
     {
         var displayName = context.ModelMetadata.GetDisplayName();
-        var message = string.Format(ErrorMessageString, displayName, string.Join(", ", Words));
+        var message = context.Localize(MessageKey, displayName, string.Join(", ", Words));
 
         ValidationAttributeHelpers.MergeAttribute(context.Attributes, "data-val", "true");
         ValidationAttributeHelpers.MergeAttribute(context.Attributes, "data-val-forbiddenwords", message);

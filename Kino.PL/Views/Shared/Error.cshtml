@@ -1,13 +1,13 @@
 ﻿@{
-    ViewData["Title"] = "Помилка";
+    ViewData["Title"] = L["Errors.Title"];
     var statusCode = ViewData["StatusCode"];
 }
 
 <section class="status-page">
     <p class="status-code">@(statusCode ?? 500)</p>
-    <h1>Сталася помилка</h1>
-    <p class="lead">Під час обробки запиту виникла помилка. Спробуйте повернутися на головну сторінку.</p>
+    <h1>@L["Errors.Heading"]</h1>
+    <p class="lead">@L["Errors.Lead"]</p>
     <div class="page-actions">
-        <a class="btn btn-accent" asp-controller="Movies" asp-action="Index">На головну</a>
+        <a class="btn btn-accent" asp-controller="Movies" asp-action="Index">@L["Common.ToHome"]</a>
     </div>
 </section>

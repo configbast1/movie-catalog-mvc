@@ -5,58 +5,61 @@ using Kino.PL.Validation;
 namespace Kino.PL.ViewModels;
 
 // модель рівня представлення: усе, що стосується форми та валідації вводу.
-// саме вона живе у в'юхах, а не сутність з DAL
+// саме вона живе у в'юхах, а не сутність з DAL.
+// у Display/ErrorMessage стоять не тексти, а ключі з Resources/SharedResource.{culture}.json —
+// їх перекладає AddDataAnnotationsLocalization
 public class MovieViewModel : IValidatableObject
 {
     public int Id { get; set; }
 
-    [Required(ErrorMessage = "Вкажіть назву фільму")]
-    [Display(Name = "Назва фільму")]
-    [StringLength(200, MinimumLength = 2, ErrorMessage = "Назва має містити від {2} до {1} символів")]
+    [Required(ErrorMessage = "Validation.TitleRequired")]
+    [Display(Name = "Fields.Title")]
+    [StringLength(200, MinimumLength = 2, ErrorMessage = "Validation.TitleLength")]
     [ForbiddenWords]
     [UniqueMovieTitle]
     [Remote(action: "CheckTitle", controller: "Movies", AdditionalFields = nameof(Id),
-        ErrorMessage = "Фільм з такою назвою вже є в каталозі")]
+        ErrorMessage = "Validation.TitleExists")]
     public string Title { get; set; } = string.Empty;
 
-    [Display(Name = "Оригінальна назва")]
-    [StringLength(200, ErrorMessage = "Максимум {1} символів")]
+    [Display(Name = "Fields.OriginalTitle")]
+    [StringLength(200, ErrorMessage = "Validation.MaxLength")]
     [ForbiddenWords]
     public string? OriginalTitle { get; set; }
 
-    [Required(ErrorMessage = "Вкажіть режисера")]
-    [Display(Name = "Режисер")]
-    [StringLength(120, MinimumLength = 3, ErrorMessage = "Ім'я режисера має містити від {2} до {1} символів")]
-    [RegularExpression(@"^[A-Za-zА-Яа-яЄЇІҐєїіґЁё'’.\- ]+$",
-        ErrorMessage = "Ім'я режисера може містити лише літери, пробіли, апостроф, крапку та дефіс")]
+    [Required(ErrorMessage = "Validation.DirectorRequired")]
+    [Display(Name = "Fields.Director")]
+    [StringLength(120, MinimumLength = 3, ErrorMessage = "Validation.DirectorLength")]
+    // À-ÖØ-öø-ÿ — літери з діакритикою, щоб приймались французькі імена (Jean-Pierre Jeunet, Luc Besson, François Truffaut)
+    [RegularExpression(@"^[A-Za-zÀ-ÖØ-öø-ÿА-Яа-яЄЇІҐєїіґЁё'’.\- ]+$",
+        ErrorMessage = "Validation.DirectorPattern")]
     public string Director { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Вкажіть жанр")]
-    [Display(Name = "Жанр")]
-    [StringLength(80, ErrorMessage = "Максимум {1} символів")]
+    [Required(ErrorMessage = "Validation.GenreRequired")]
+    [Display(Name = "Fields.Genre")]
+    [StringLength(80, ErrorMessage = "Validation.MaxLength")]
     public string Genre { get; set; } = string.Empty;
 
-    [Display(Name = "Рік випуску")]
+    [Display(Name = "Fields.ReleaseYear")]
     [ReleaseYear]
     public int ReleaseYear { get; set; }
 
-    [Display(Name = "Постер")]
-    [StringLength(260, ErrorMessage = "Максимум {1} символів")]
+    [Display(Name = "Fields.PosterPath")]
+    [StringLength(260, ErrorMessage = "Validation.MaxLength")]
     public string PosterPath { get; set; } = string.Empty;
 
-    [Display(Name = "Постер (файл із пристрою)")]
+    [Display(Name = "Fields.PosterFile")]
     [PosterFile(MaxMegabytes = 5)]
     public IFormFile? PosterFile { get; set; }
 
-    [Required(ErrorMessage = "Додайте короткий опис")]
-    [Display(Name = "Короткий опис")]
-    [StringLength(1000, MinimumLength = 20, ErrorMessage = "Опис має містити від {2} до {1} символів")]
+    [Required(ErrorMessage = "Validation.DescriptionRequired")]
+    [Display(Name = "Fields.Description")]
+    [StringLength(1000, MinimumLength = 20, ErrorMessage = "Validation.DescriptionLength")]
     [DataType(DataType.MultilineText)]
     [ForbiddenWords]
     public string Description { get; set; } = string.Empty;
 
-    [Display(Name = "Оцінка")]
-    [Range(0.0, 10.0, ErrorMessage = "Оцінка має бути від {1} до {2}")]
+    [Display(Name = "Fields.Rating")]
+    [Range(0.0, 10.0, ErrorMessage = "Validation.RatingRange")]
     public decimal Rating { get; set; }
 
     // правила рівня всієї моделі: перевіряються після атрибутів окремих полів
@@ -66,14 +69,14 @@ public class MovieViewModel : IValidatableObject
             string.Equals(OriginalTitle.Trim(), Title?.Trim(), StringComparison.CurrentCultureIgnoreCase))
         {
             yield return new ValidationResult(
-                "Оригінальна назва дублює основну — залиште поле порожнім або введіть назву мовою оригіналу.",
+                validationContext.Localize("Validation.OriginalDuplicates"),
                 new[] { nameof(OriginalTitle) });
         }
 
         if (ReleaseYear > DateTime.Now.Year && Rating > 0)
         {
             yield return new ValidationResult(
-                $"Фільм {ReleaseYear} року ще не вийшов у прокат — виставляти оцінку зарано.");
+                validationContext.Localize("Validation.RatingTooEarly", ReleaseYear));
         }
     }
 }

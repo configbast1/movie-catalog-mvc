@@ -7,11 +7,6 @@ namespace Kino.PL.Validation;
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
 public sealed class UniqueMovieTitleAttribute : ValidationAttribute
 {
-    public UniqueMovieTitleAttribute()
-        : base("Фільм з назвою «{0}» вже є в каталозі.")
-    {
-    }
-
     protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
     {
         if (value is not string title || string.IsNullOrWhiteSpace(title))
@@ -33,7 +28,7 @@ public sealed class UniqueMovieTitleAttribute : ValidationAttribute
         }
 
         return new ValidationResult(
-            string.Format(ErrorMessageString, normalized),
+            validationContext.Localize("Validation.UniqueTitle", normalized),
             validationContext.MemberName is null ? null : new[] { validationContext.MemberName });
     }
 }
